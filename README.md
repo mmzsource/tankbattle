@@ -15,7 +15,7 @@ with a REST API.
 The running environment minimally contains:
 
 - 1 server
-- 1 (big) screen rendering a playgound
+- 1 (big) screen with a game-master client rendering one playgound
 - 2 REST API clients
 - a network connecting the server and clients
 
@@ -23,6 +23,8 @@ The running environment minimally contains:
 
 - Startup the server
 - Communicate the server address
+
+</br>
 
 - `<CODE>`
 - BATTLE!

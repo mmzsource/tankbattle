@@ -3,11 +3,9 @@
 
 (def directions #{:north :east :south :west})
 
-;; (def obstacles  #{:tree :weak-wall :bouncy-wall})
-
 ;; Validation of ids, commands, moves, directions etc will be done once on the
 ;; server boundary (as opposed to validating the values in each and every
-;; function.
+;; function)
 
 
 ;;;;;;;;;;;;;;;
