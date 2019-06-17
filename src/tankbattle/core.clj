@@ -157,9 +157,10 @@
 
 
 (defn init-world [cols rows]
-  {:tanks     (create-tank 1 [1 4] :red)
-   :obstacles (merge (borders cols rows) (obstacles cols rows))
-   :bullets   {}})
+  {:tanks      (create-tank 1 [1 4] :red)
+   :obstacles  (merge (borders cols rows) (obstacles cols rows))
+   :bullets    {}
+   :explosions {}})
 
 (defn -main
   "It all starts here"
@@ -169,48 +170,53 @@
 
 (comment
 
-(def world {:tanks     {1 {:position  [2 2]
-                           :direction :south
-                           :energy    10
-                           :color     :blue
-                           :moving    true
-                           :firing    false
-                           :bullets   256}
-                        2 {:position  [3 4]
-                           :direction :east
-                           :energy    2
-                           :color     :red
-                           :moving    false
-                           :firing    true
-                           :bullets   311}}
-            :obstacles {[0 0] {:energy -1 :type :border}
-                        [1 0] {:energy -1 :type :border}
-                        [2 0] {:energy -1 :type :border}
-                        [3 0] {:energy -1 :type :border}
-                        [4 0] {:energy -1 :type :border}
-                        [5 0] {:energy -1 :type :border}
-                        [6 0] {:energy -1 :type :border}
-                        [0 1] {:energy -1 :type :border}
-                        [6 1] {:energy -1 :type :border}
-                        [0 2] {:energy -1 :type :border}
-                        [6 2] {:energy -1 :type :border}
-                        [0 3] {:energy -1 :type :border}
-                        [3 3] {:energy -8 :type :border}
-                        [0 4] {:energy -1 :type :border}
-                        [6 4] {:energy -1 :type :border}
-                        [0 5] {:energy -1 :type :border}
-                        [6 5] {:energy -1 :type :border}
-                        [0 6] {:energy -1 :type :border}
-                        [1 6] {:energy -1 :type :border}
-                        [2 6] {:energy -1 :type :border}
-                        [3 6] {:energy -1 :type :border}
-                        [4 6] {:energy -1 :type :border}
-                        [5 6] {:energy -1 :type :border}
-                        [6 6] {:energy -1 :type :border}
-                        [2 1] {:energy  3 :type :tree}
-                        [3 4] {:energy  2 :type :tree}
-                        [5 4] {:energy  5 :type :wall}
-                        [1 5] {:energy  9 :type :bouncy-wall}}
-            :bullets   {[4 4] {:direction :east}}})
+(def world {:tanks       {1 {:position  [2 2]
+                             :direction :south
+                             :energy    10
+                             :color     :blue
+                             :moving    true
+                             :firing    false
+                             :bullets   256}
+                          2 {:position  [3 4]
+                             :direction :east
+                             :energy    2
+                             :color     :red
+                             :moving    false
+                             :firing    true
+                             :bullets   311}}
+            :obstacles   {[0 0] {:energy -1 :type :border}
+                          [1 0] {:energy -1 :type :border}
+                          [2 0] {:energy -1 :type :border}
+                          [3 0] {:energy -1 :type :border}
+                          [4 0] {:energy -1 :type :border}
+                          [5 0] {:energy -1 :type :border}
+                          [6 0] {:energy -1 :type :border}
+                          [0 1] {:energy -1 :type :border}
+                          [6 1] {:energy -1 :type :border}
+                          [0 2] {:energy -1 :type :border}
+                          [6 2] {:energy -1 :type :border}
+                          [0 3] {:energy -1 :type :border}
+                          [3 3] {:energy -8 :type :border}
+                          [0 4] {:energy -1 :type :border}
+                          [6 4] {:energy -1 :type :border}
+                          [0 5] {:energy -1 :type :border}
+                          [6 5] {:energy -1 :type :border}
+                          [0 6] {:energy -1 :type :border}
+                          [1 6] {:energy -1 :type :border}
+                          [2 6] {:energy -1 :type :border}
+                          [3 6] {:energy -1 :type :border}
+                          [4 6] {:energy -1 :type :border}
+                          [5 6] {:energy -1 :type :border}
+                          [6 6] {:energy -1 :type :border}
+                          [2 1] {:energy  3 :type :tree}
+                          [3 4] {:energy  2 :type :tree}
+                          [5 4] {:energy  5 :type :wall}
+                          [1 5] {:energy  9 :type :bouncy-wall}}
+            :bullets     {[4 4] {:direction :east}}
+            :explosions {[1 2] {:counter 3}
+                         [5 5] {:counter 5}}})
+
+(def tank-cmd-backlog {1 [:east :stop :fire]
+                       2 []})
 
   )
