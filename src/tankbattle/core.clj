@@ -13,9 +13,13 @@
 ;;;;;;;;;;;;;;;
 
 
-(defn generate-random-position [mincol maxcol minrow maxrow]
-  [(rand-nth (range mincol (inc maxcol)))
-   (rand-nth (range minrow (inc maxrow)))])
+(defn generate-random-position
+  "generates one random position on the board within given bounds"
+  ([cols rows]
+   (generate-random-position 0 cols 0 rows))
+  ([mincol maxcol minrow maxrow]
+   [(rand-nth (range mincol (inc maxcol)))
+    (rand-nth (range minrow (inc maxrow)))]))
 
 (defn north-of [[x y]] [x (dec y)])
 (defn south-of [[x y]] [x (inc y)])
@@ -56,11 +60,15 @@
 ;;;;;;;;;;;;;;;
 
 
-;; TODO: make nr of repeats depend on size of grid
-(defn random-obstacle-positions [cols rows]
-  (into #{} (repeatedly 5 #(generate-random-position 2 (- cols 2) 2 (- rows 2)))))
+(defn random-obstacle-positions
+  "returns a set of random obstacle positions proportional to the size of the board"
+  [cols rows]
+  (let [nr-of-obstacles (int (* 0.1 (* cols rows)))]
+    (into #{} (repeatedly nr-of-obstacles #(generate-random-position 2 (- cols 2) 2 (- rows 2))))))
 
-(defn obstacles [cols rows]
+(defn obstacles
+  "returns a map of obstacles with random positions"
+  [cols rows]
   (let [positions (random-obstacle-positions cols rows)
         obstacles (repeatedly
                    (count positions)
