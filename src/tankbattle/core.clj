@@ -1,7 +1,7 @@
 (ns tankbattle.core
   (:require [clojure.set :as s]))
 
-(def directions #{:north :east :south :west})
+(def orientations #{:north :east :south :west})
 
 ;; Validation of ids, commands, moves, directions etc will be done once on the
 ;; server boundary (as opposed to validating the values in each and every
@@ -81,15 +81,16 @@
 ;; TANKS ;;
 ;;;;;;;;;;;
 
+(def tank-cmds #{:drive :stop :turn-north :turn-east :turn-south :turn-west :fire :hold-fire})
 
 (defn create-tank [id position color]
-  {id {:position  position
-       :direction (first (shuffle directions))
-       :energy    10
-       :color     color
-       :moving    false
-       :firing    false
-       :bullets   100}})
+  {id {:position    position
+       :orientation (first (shuffle orientations))
+       :energy      10
+       :color       color
+       :moving      false
+       :firing      false
+       :bullets     100}})
 
 (defn get-tank [world id]
   (get-in world [:tanks id]))
@@ -100,17 +101,34 @@
 (defn stop [tank]
   (merge tank {:moving false}))
 
-(defn change-direction [tank direction]
-  (merge tank {:orientation direction}))
+(defn turn [tank orientation]
+  (merge tank {:orientation orientation}))
 
 (defn fire [tank]
-  (merge tank {:firing true}))
+  (if-not (tank :moving)
+    (merge tank {:firing true})
+    tank))
 
 (defn hold-fire [tank]
   (merge tank {:firing false}))
 
 (defn shot-bullet [tank]
   (update tank :bullets dec))
+
+(defn update-tank [tank cmd]
+  (cond
+    (= cmd :drive)      (drive     tank)
+    (= cmd :stop)       (stop      tank)
+    (= cmd :turn-north) (turn      tank :north)
+    (= cmd :turn-east)  (turn      tank :east)
+    (= cmd :turn-south) (turn      tank :south)
+    (= cmd :turn-west)  (turn      tank :west)
+    (= cmd :fire)       (fire      tank)
+    (= cmd :hold-fire)  (hold-fire tank)
+    :else               tank))
+
+(defn execute-cmds [tank cmds]
+  (reduce (fn [acc cmd] (update-tank acc cmd)) tank cmds))
 
 
 ;;;;;;;;;;;;;
@@ -170,20 +188,20 @@
 
 (comment
 
-(def world {:tanks       {1 {:position  [2 2]
-                             :direction :south
-                             :energy    10
-                             :color     :blue
-                             :moving    true
-                             :firing    false
-                             :bullets   256}
-                          2 {:position  [3 4]
-                             :direction :east
-                             :energy    2
-                             :color     :red
-                             :moving    false
-                             :firing    true
-                             :bullets   311}}
+(def world {:tanks       {1 {:position    [2 2]
+                             :orientation :south
+                             :energy      10
+                             :color       :blue
+                             :moving      true
+                             :firing      false
+                             :bullets     256}
+                          2 {:position    [3 4]
+                             :oreintation :east
+                             :energy      2
+                             :color       :red
+                             :moving      false
+                             :firing      true
+                             :bullets     311}}
             :obstacles   {[0 0] {:energy -1 :type :border}
                           [1 0] {:energy -1 :type :border}
                           [2 0] {:energy -1 :type :border}
@@ -216,7 +234,7 @@
             :explosions {[1 2] {:counter 3}
                          [5 5] {:counter 5}}})
 
-(def tank-cmd-backlog {1 [:east :stop :fire]
+(def tank-cmd-backlog {1 [:turn-east :stop :fire]
                        2 []})
 
   )
