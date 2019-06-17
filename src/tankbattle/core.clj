@@ -59,12 +59,19 @@
 ;; OBSTACLES ;;
 ;;;;;;;;;;;;;;;
 
+(defn random-obstacle-position [cols rows]
+  (generate-random-position 2 (- cols 2) 2 (- rows 2)))
 
 (defn random-obstacle-positions
   "returns a set of random obstacle positions proportional to the size of the board"
   [cols rows]
   (let [nr-of-obstacles (int (* 0.1 (* cols rows)))]
-    (into #{} (repeatedly nr-of-obstacles #(generate-random-position 2 (- cols 2) 2 (- rows 2))))))
+    (into #{} (repeatedly nr-of-obstacles #(random-obstacle-position cols rows)))))
+
+(defn random-obstacle []
+  (rand-nth [{:energy  3 :type :tree}
+             {:energy  5 :type :wall}
+             {:energy 10 :type :bouncy-wall}]))
 
 (defn obstacles
   "returns a map of obstacles with random positions"
@@ -72,16 +79,15 @@
   (let [positions (random-obstacle-positions cols rows)
         obstacles (repeatedly
                    (count positions)
-                   #(rand-nth [{:energy  3 :type :tree}
-                               {:energy  5 :type :wall}
-                               {:energy 10 :type :bouncy-wall}]))]
+                   #(random-obstacle))]
     (zipmap positions obstacles)))
 
 ;;;;;;;;;;;
 ;; TANKS ;;
 ;;;;;;;;;;;
 
-(def tank-cmds #{:drive :stop :turn-north :turn-east :turn-south :turn-west :fire :hold-fire})
+
+(def commands #{:drive :stop :turn-north :turn-east :turn-south :turn-west :fire :hold-fire})
 
 (defn create-tank [id position color]
   {id {:position    position
@@ -113,7 +119,9 @@
   (merge tank {:firing false}))
 
 (defn shot-bullet [tank]
-  (update tank :bullets dec))
+  (if (> (:bullets tank) 0)
+    (update tank :bullets dec)
+    tank))
 
 (defn update-tank [tank cmd]
   (cond
