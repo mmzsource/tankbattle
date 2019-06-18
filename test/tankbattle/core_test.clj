@@ -136,45 +136,43 @@
 (deftest tank-driving
   (testing "tank reacts to driving command"
     (let [stopped-tank {:moving false}]
-      (is (:moving (drive stopped-tank))))))
+      (is (= (drive stopped-tank) {:moving true})))))
 
 (deftest tank-stopping
   (testing "tank reacts to stop command"
     (let [moving-tank  {:moving true}]
-      (is (= (:moving (stop moving-tank)) false)))))
+      (is (= (stop moving-tank) {:moving false})))))
 
 (deftest tank-turning
   (testing "turing of a tank"
     (let [tank {:orientation :north}]
-      (is (= (:orientation (turn tank :east))  :east))
-      (is (= (:orientation (turn tank :south)) :south))
-      (is (= (:orientation (turn tank :west))  :west))
-      (is (= (:orientation (turn tank :north)) :north)))))
+      (is (= (turn tank :east)  {:orientation :east}))
+      (is (= (turn tank :south) {:orientation :south}))
+      (is (= (turn tank :west)  {:orientation :west}))
+      (is (= (turn tank :north) {:orientation :north})))))
 
 (deftest tank-only-fires-when-not-moving
   (testing "tank only fires when it's not moving"
     (let [stopped-tank {:moving false :firing false}
           moving-tank  {:moving true  :firing false}]
-      (is (= (:firing (fire moving-tank))  false))
-      (is (= (:firing (fire stopped-tank)) true)))))
+      (is (= (fire moving-tank)  {:moving true :firing false}))
+      (is (= (fire stopped-tank) {:moving false :firing true})))))
 
 (deftest tank-hold-your-fire
   (testing "tank holds fire when commanded to"
     (let [tank {:firing true}]
-      (is (= (:firing (hold-fire tank)) false)))))
+      (is (= (hold-fire tank) {:firing false})))))
 
 (deftest decrements-bullet-when-firing
   (testing "number of bullets is decremented when tank is firing"
     (let [tank        {:bullets 10}
           no-amo-tank {:bullets  0}]
-      (is (= (:bullets (shot-bullet tank))        9))
-      (is (= (:bullets (shot-bullet no-amo-tank)) 0)))))
+      (is (= (shot-bullet tank) {:bullets 9}))
+      (is (= (shot-bullet no-amo-tank) {:bullets 0})))))
 
 (deftest executes-sequence-of-commands
   (testing "a tank can execute a sequence of commands"
     (let [tank         {:moving true :firing false :orientation :south}
           cmds         [:stop :fire :turn-east]
           updated-tank (execute-cmds tank cmds)]
-      (is (= (:moving      updated-tank) false))
-      (is (= (:firing      updated-tank) true))
-      (is (= (:orientation updated-tank) :east)))))
+      (is (= updated-tank {:moving false :firing true :orientation :east})))))

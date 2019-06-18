@@ -98,9 +98,6 @@
        :firing      false
        :bullets     100}})
 
-(defn get-tank [world id]
-  (get-in world [:tanks id]))
-
 (defn drive [tank]
   (merge tank {:moving true}))
 
@@ -136,7 +133,7 @@
     :else               tank))
 
 (defn execute-cmds [tank cmds]
-  (reduce (fn [acc cmd] (update-tank acc cmd)) tank cmds))
+  (reduce update-tank tank cmds))
 
 
 ;;;;;;;;;;;;;
