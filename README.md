@@ -38,7 +38,7 @@ clojure, etc.
 ## Development
 
 - Test with `lein test`
-- Run with `lein run`
+- Run server with `lein run`
 - Build jar with `lein uberjar`
 
 ## Credits
