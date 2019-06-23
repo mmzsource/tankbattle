@@ -37,82 +37,37 @@
       (is (= nesw [[4 3] [5 4] [4 5] [3 4]])))))
 
 
-;;;;;;;;;;;;;
-;; BORDERS ;;
-;;;;;;;;;;;;;
+;;;;;;;;;;;
+;; WALLS ;;
+;;;;;;;;;;;
 
 
-(deftest north-border-position-calculation
-  (testing "north border positions calculation"
-    (let [positions (north-border-positions 4 6)]
+(deftest north-wall-position-calculation
+  (testing "north wall positions calculation"
+    (let [positions (north-wall-positions 4 6)]
       (is (= positions #{[0 0] [1 0] [2 0] [3 0]})))))
 
-(deftest east-border-position-calculation
-  (testing "east border positions calculation"
-    (let [positions (east-border-positions 4 6)]
+(deftest east-wall-position-calculation
+  (testing "east wall positions calculation"
+    (let [positions (east-wall-positions 4 6)]
       (is (= positions #{[3 0] [3 1] [3 2] [3 3] [3 4] [3 5]})))))
 
-(deftest south-border-position-calculation
-  (testing "south border positions calculation"
-    (let [positions (south-border-positions 4 6)]
+(deftest south-wall-position-calculation
+  (testing "south wall positions calculation"
+    (let [positions (south-wall-positions 4 6)]
       (is (= positions #{[0 5] [1 5] [2 5] [3 5]})))))
 
-(deftest west-border-position-calculation
-  (testing "west border positions calculation"
-    (let [positions (west-border-positions 4 6)]
+(deftest west-wall-position-calculation
+  (testing "west wall positions calculation"
+    (let [positions (west-wall-positions 4 6)]
       (is (= positions #{[0 0] [0 1] [0 2] [0 3] [0 4] [0 5]})))))
 
-(deftest border-generation
-  (testing "border generation of a board"
-    (let [borders (borders 4 6)]
-      (is (map? borders))
-      (is (= (count borders) 16))
-      (is (= (first (vals borders)) {:energy -1 :type :border})))))
-
-
-;;;;;;;;;;;;;;;
-;; OBSTACLES ;;
-;;;;;;;;;;;;;;;
-
-
-(deftest rndobs1
-  (testing "random obstacle position calculation"
-    (let [rop (random-obstacle-position 10 10)]
-      (is (vector? rop))
-      (is (>= (first rop) 2))
-      (is (<= (last  rop) 8)))))
-
-(deftest rndobs2
-  (testing "random obstacle position calculation forced into 1 cell"
-    (let [rop (random-obstacle-position 4 4)]
-      (is (= rop [2 2])))))
-
-(deftest rndobs3
-  (testing "random obstacle position*s* calculation proportional to board size"
-    (let [rops-small (random-obstacle-positions  10  10)
-          rops-large (random-obstacle-positions 100 100)]
-      (is (> (count rops-small)    5))
-      (is (< (count rops-small)   11))
-      (is (> (count rops-large)  500))
-      (is (< (count rops-large) 1001)))))
-
-(deftest create-random-obstacle
-  (testing "creation of random obstacle"
-    (let [rndobs (random-obstacle)]
-      (is (or (= rndobs {:energy  3 :type :tree})
-              (= rndobs {:energy  5 :type :wall})
-              (= rndobs {:energy 10 :type :bouncy-wall}))))))
-
-
-(deftest obstacles-creation
-  (testing "creation of obstacles"
-    (let [obstacles (obstacles 10 10)]
-      (is (map?      obstacles))
-      (is (>         (count obstacles)) 5)
-      (is (vector?   (first (keys obstacles))))
-      (is (map?      (first (vals obstacles))))
-      (is (contains? (first (vals obstacles)) :energy))
-      (is (contains? (first (vals obstacles)) :type)))))
+(deftest wall-generation
+  (testing "wall generation of a board"
+    (let [wls (create-walls 4 6)]
+      (is (vector? wls))
+      (is (= (count wls) 16))
+      (is (= (keys (first wls)) [:position :energy])))))
 
 
 ;;;;;;;;;;;
@@ -122,16 +77,12 @@
 
 (deftest tank-creation
   (testing "creation of a tank"
-    (let [tank     (create-tank 1 [2 3] :green)
-          tank-map (tank 1)]
-      (is (map? tank-map))
-      (is (contains? tank-map :position))
-      (is (contains? tank-map :orientation))
-      (is (contains? tank-map :energy))
-      (is (contains? tank-map :color))
-      (is (contains? tank-map :moving))
-      (is (contains? tank-map :firing))
-      (is (contains? tank-map :bullets)))))
+    (let [tank (create-tank 1 [2 3] :green)]
+      (is (map? tank))
+      (is (= (keys tank) [:id :position :orientation :energy :color :moving :firing :bullets]))
+      (is (= (tank :id)       1))
+      (is (= (tank :position) [2 3]))
+      (is (= (tank :color)    :green)))))
 
 (deftest tank-driving
   (testing "tank reacts to driving command"
@@ -176,3 +127,20 @@
           cmds         [:stop :fire :turn-east]
           updated-tank (execute-cmds tank cmds)]
       (is (= updated-tank {:moving false :firing true :orientation :east})))))
+
+
+;;;;;;;;;;;;;
+;; BULLETS ;;
+;;;;;;;;;;;;;
+
+
+(deftest bullet-movement
+  (testing "bullet moves 1 cell in the direction it's flying"
+    (let [north {:position [3 3] :direction :north}
+          east  {:position [3 3] :direction :east}
+          south {:position [3 3] :direction :south}
+          west  {:position [3 3] :direction :west}]
+      (is (= (move-bullet north) {:position [3 2] :direction :north}))
+      (is (= (move-bullet east)  {:position [4 3] :direction :east}))
+      (is (= (move-bullet south) {:position [3 4] :direction :south}))
+      (is (= (move-bullet west)  {:position [2 3] :direction :west})))))

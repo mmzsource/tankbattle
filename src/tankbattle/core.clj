@@ -1,12 +1,12 @@
 (ns tankbattle.core
   (:require [clojure.set :as s]))
 
-(def orientations #{:north :east :south :west})
-
 ;; Validation of ids, commands, moves, directions etc will be done once on the
 ;; server boundary (as opposed to validating the values in each and every
 ;; function)
 
+
+(def orientations #{:north :east :south :west})
 
 ;;;;;;;;;;;;;;;
 ;; POSITIONS ;;
@@ -32,55 +32,28 @@
 ;;;;;;;;;;;;
 
 
-(defn north-border-positions [cols rows]
+(defn north-wall-positions [cols rows]
   (into #{} (for [x (range cols)] [x 0])))
 
-(defn east-border-positions [cols rows]
+(defn east-wall-positions [cols rows]
   (into #{} (for [y (range rows)] [(dec cols) y])))
 
-(defn south-border-positions [cols rows]
+(defn south-wall-positions [cols rows]
   (into #{} (for [x (range cols)] [x (dec rows)])))
 
-(defn west-border-positions [cols rows]
+(defn west-wall-positions [cols rows]
   (into #{} (for [y (range rows)] [0 y])))
 
-(defn border-positions [cols rows]
+(defn wall-positions [cols rows]
   (s/union
-   (north-border-positions cols rows)
-   (east-border-positions  cols rows)
-   (south-border-positions cols rows)
-   (west-border-positions  cols rows)))
+   (north-wall-positions cols rows)
+   (east-wall-positions  cols rows)
+   (south-wall-positions cols rows)
+   (west-wall-positions  cols rows)))
 
-(defn borders [cols rows]
-  (zipmap (border-positions cols rows) (repeat {:energy -1 :type :border})))
-
-
-;;;;;;;;;;;;;;;
-;; OBSTACLES ;;
-;;;;;;;;;;;;;;;
-
-(defn random-obstacle-position [cols rows]
-  (generate-random-position 2 (- cols 2) 2 (- rows 2)))
-
-(defn random-obstacle-positions
-  "returns a set of random obstacle positions proportional to the size of the board"
-  [cols rows]
-  (let [nr-of-obstacles (int (* 0.1 (* cols rows)))]
-    (into #{} (repeatedly nr-of-obstacles #(random-obstacle-position cols rows)))))
-
-(defn random-obstacle []
-  (rand-nth [{:energy  3 :type :tree}
-             {:energy  5 :type :wall}
-             {:energy 10 :type :bouncy-wall}]))
-
-(defn obstacles
-  "returns a map of obstacles with random positions"
-  [cols rows]
-  (let [positions (random-obstacle-positions cols rows)
-        obstacles (repeatedly
-                   (count positions)
-                   #(random-obstacle))]
-    (zipmap positions obstacles)))
+(defn create-walls [cols rows]
+  (let [wps (wall-positions cols rows)]
+    (mapv (fn [wall-position] {:position wall-position :energy -1}) wps)))
 
 ;;;;;;;;;;;
 ;; TANKS ;;
@@ -90,13 +63,14 @@
 (def commands #{:drive :stop :turn-north :turn-east :turn-south :turn-west :fire :hold-fire})
 
 (defn create-tank [id position color]
-  {id {:position    position
-       :orientation (first (shuffle orientations))
-       :energy      10
-       :color       color
-       :moving      false
-       :firing      false
-       :bullets     100}})
+  {:id          id
+   :position    position
+   :orientation (first (shuffle orientations))
+   :energy      10
+   :color       color
+   :moving      false
+   :firing      false
+   :bullets     100})
 
 (defn drive [tank]
   (merge tank {:moving true}))
@@ -141,12 +115,14 @@
 ;;;;;;;;;;;;;
 
 
-(defn reverse-direction [current-direction]
-  (current-direction
-   {:north :south
-    :south :north
-    :east  :west
-    :west  :east}))
+(defn move-bullet [{:keys [position direction] :as bullet}]
+  (let [[col row] position]
+    (cond
+      (= direction :north) (merge bullet {:position [col (dec row)]})
+      (= direction :east)  (merge bullet {:position [(inc col) row]})
+      (= direction :south) (merge bullet {:position [col (inc row)]})
+      (= direction :west)  (merge bullet {:position [(dec col) row]})
+      :else                bullet)))
 
 (defn hit-by-bullet [object]
   (update object :energy dec))
@@ -160,86 +136,81 @@
 ;;;;;;;;;;;
 
 
-;; Reserved positions for initial world state:
-;;
-;; bbbbbbbbbbbbbbbbbbbbbb
-;; bttttttttttttttttttttb
-;; bt******************tb
-;; bt******************tb
-;; bt******************tb
-;; bt******************tb
-;; bt******************tb
-;; bt******************tb
-;; bttttttttttttttttttttb
-;; bbbbbbbbbbbbbbbbbbbbbb
-;;
-;; b = border
-;; t = reserved for tank starting positions
-;; * = reserved for obstacles (walls, trees, etc)
-;;
+(def tanks [{:id          1
+             :position    [2 2]
+             :orientation :south
+             :energy      5
+             :color       :blue
+             :moving      true
+             :firing      false
+             :bullets     256}
+            {:id          2
+             :position    [3 4]
+             :orientation :east
+             :energy      2
+             :color       :red
+             :moving      false
+             :firing      true
+             :bullets     311}])
+
+(def trees [{:position [3 3] :energy 3}])
+
+(def walls [{:position [0 0] :energy -1}
+            {:position [1 0] :energy -1}
+            {:position [2 0] :energy -1}
+            {:position [3 0] :energy -1}
+            {:position [4 0] :energy -1}
+            {:position [5 0] :energy -1}
+            {:position [6 0] :energy -1}
+            {:position [0 1] :energy -1}
+            {:position [6 1] :energy -1}
+            {:position [0 2] :energy -1}
+            {:position [6 2] :energy -1}
+            {:position [0 3] :energy -1}
+            {:position [6 3] :energy -1}
+            {:position [0 4] :energy -1}
+            {:position [6 4] :energy -1}
+            {:position [0 5] :energy -1}
+            {:position [6 5] :energy -1}
+            {:position [0 6] :energy -1}
+            {:position [1 6] :energy -1}
+            {:position [2 6] :energy -1}
+            {:position [3 6] :energy -1}
+            {:position [4 6] :energy -1}
+            {:position [5 6] :energy -1}
+            {:position [6 6] :energy -1}])
+
+(def bullets [{:position [4 4] :energy 1 :direction :east :tankid 1}])
+
+(def explosions [{:position [1 2] :energy 7}
+                 {:position [5 5] :energy 4}])
+
+(def world
+  {:dimensions {:width 7 :height 7}
+   :tanks      tanks
+   :trees      trees
+   :walls      walls
+   :bullets    bullets
+   :explosions explosions})
 
 
+;; TODO: position tanks and trees randomly based on grid size
 (defn init-world [cols rows]
-  {:tanks      (create-tank 1 [1 4] :red)
-   :obstacles  (merge (borders cols rows) (obstacles cols rows))
-   :bullets    {}
-   :explosions {}})
+  {:dimensions {:width cols :height rows}
+   :tanks      tanks
+   :trees      trees
+   :walls      (walls cols rows)
+   :bullets    bullets
+   :explosions explosions})
 
 (defn -main
   "It all starts here"
   [& args]
   (init-world 10 10))
 
-
 (comment
 
-(def world {:tanks       {1 {:position    [2 2]
-                             :orientation :south
-                             :energy      10
-                             :color       :blue
-                             :moving      true
-                             :firing      false
-                             :bullets     256}
-                          2 {:position    [3 4]
-                             :oreintation :east
-                             :energy      2
-                             :color       :red
-                             :moving      false
-                             :firing      true
-                             :bullets     311}}
-            :obstacles   {[0 0] {:energy -1 :type :border}
-                          [1 0] {:energy -1 :type :border}
-                          [2 0] {:energy -1 :type :border}
-                          [3 0] {:energy -1 :type :border}
-                          [4 0] {:energy -1 :type :border}
-                          [5 0] {:energy -1 :type :border}
-                          [6 0] {:energy -1 :type :border}
-                          [0 1] {:energy -1 :type :border}
-                          [6 1] {:energy -1 :type :border}
-                          [0 2] {:energy -1 :type :border}
-                          [6 2] {:energy -1 :type :border}
-                          [0 3] {:energy -1 :type :border}
-                          [3 3] {:energy -8 :type :border}
-                          [0 4] {:energy -1 :type :border}
-                          [6 4] {:energy -1 :type :border}
-                          [0 5] {:energy -1 :type :border}
-                          [6 5] {:energy -1 :type :border}
-                          [0 6] {:energy -1 :type :border}
-                          [1 6] {:energy -1 :type :border}
-                          [2 6] {:energy -1 :type :border}
-                          [3 6] {:energy -1 :type :border}
-                          [4 6] {:energy -1 :type :border}
-                          [5 6] {:energy -1 :type :border}
-                          [6 6] {:energy -1 :type :border}
-                          [2 1] {:energy  3 :type :tree}
-                          [3 4] {:energy  2 :type :tree}
-                          [5 4] {:energy  5 :type :wall}
-                          [1 5] {:energy  9 :type :bouncy-wall}}
-            :bullets     {[4 4] {:direction :east}}
-            :explosions {[1 2] {:counter 3}
-                         [5 5] {:counter 5}}})
+;; Sequence is in line with the order in which the events came in (fair play)
+(def tank-cmd-seq [[1 :turn-east] [1 :stop] [1 :fire] [2 :drive]] )
 
-(def tank-cmd-backlog {1 [:turn-east :stop :fire]
-                       2 []})
-
-  )
+)
