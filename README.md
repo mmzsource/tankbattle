@@ -37,8 +37,12 @@ clojure, etc.
 
 ## Development
 
+- Tested with leiningen 2.9.1 on Java 1.8.0_05. (known problems loading
+  javax.bind.xml as of java 9 ... didn't bother to fix these java related
+  problems yet).
+
 - Test with `lein test`
-- Run server with `lein run`
+- Run server with `lein run` (kill it with Ctrl-C)
 - Build jar with `lein uberjar`
 
 ## Credits
@@ -46,3 +50,7 @@ clojure, etc.
 - Arjen van Schie for the idea
 
 ## Contributors
+
+- Jeroen van Wijgerden, who's building a [rendering
+  client](https://github.com/jeroenvanw/tank-battle-rendering) and helped
+  during design and development of the tankbattle server.

@@ -36,6 +36,24 @@
     (let [nesw ((juxt north-of east-of south-of west-of) [4 4])]
       (is (= nesw [[4 3] [5 4] [4 5] [3 4]])))))
 
+(deftest creates-position-map
+  (testing "given a collection of gameobjects, creates a map from position to object"
+    (let [explosion1   {:position [1 2] :energy 5}
+          explosion2   {:position [5 5] :energy 3}
+          explosions   [explosion1 explosion2]
+          position-map (map-positions explosions)]
+      (is (= (keys position-map) [[1 2] [5 5]]))
+      (is (= (position-map [1 2]) [{:position [1 2] :energy 5}]))
+      (is (= (position-map [5 5]) [{:position [5 5] :energy 3}])))))
+
+(deftest can-have-multiple-objects-on-one-position
+  (testing "one position on the board can contain multiple gameobjects"
+    (let [bullet1 {:position [2 2] :energy 1 :direction :east  :tankid 1}
+          bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
+          position-map (map-positions [bullet1 bullet2])]
+      (is (= (keys position-map) [[2 2]]))
+      (is (= (count (position-map [2 2])) 2))
+      (is (= (map :direction position-map)) [:east :south]))))
 
 ;;;;;;;;;;;
 ;; WALLS ;;

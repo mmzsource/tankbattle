@@ -26,6 +26,17 @@
 (defn east-of  [[x y]] [(inc x) y])
 (defn west-of  [[x y]] [(dec x) y])
 
+(defn map-positions
+  "All gameobjects (maps) have a :position key. Given a collection of
+  gameobjects, returns a map from position [col row] to a collection of
+  gameobjects on that position"
+  [gameobjects]
+  (reduce
+   (fn [position-map {:keys [position] :as gameobject}]
+     (update-in position-map [position] (fnil conj []) gameobject))
+   {}
+   gameobjects))
+
 
 ;;;;;;;;;;;;
 ;; BORDER ;;
@@ -116,13 +127,12 @@
 
 
 (defn move-bullet [{:keys [position direction] :as bullet}]
-  (let [[col row] position]
-    (cond
-      (= direction :north) (merge bullet {:position [col (dec row)]})
-      (= direction :east)  (merge bullet {:position [(inc col) row]})
-      (= direction :south) (merge bullet {:position [col (inc row)]})
-      (= direction :west)  (merge bullet {:position [(dec col) row]})
-      :else                bullet)))
+  (cond
+    (= direction :north) (merge bullet {:position (north-of position)})
+    (= direction :east)  (merge bullet {:position (east-of  position)})
+    (= direction :south) (merge bullet {:position (south-of position)})
+    (= direction :west)  (merge bullet {:position (west-of  position)})
+    :else bullet))
 
 (defn hit-by-bullet [object]
   (update object :energy dec))

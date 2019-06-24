@@ -1,7 +1,8 @@
 (ns server.core
   (:require
     [yada.yada :as yada]
-    [schema.core :as s]))
+    [schema.core :as s]
+    [tankbattle.core :as tb]))
 
 ; simple atom for exposing a global function so the server can close itself
 (def server (atom nil))
@@ -11,6 +12,7 @@
    {
     "hello" (yada/as-resource "Hello World!")
     "json"  (yada/as-resource {:message "yo!"})
+    "world" (yada/as-resource tb/world)
     "die"   (yada/as-resource (fn []
                                 (future (Thread/sleep 100) (@server))
                                 "shutting down in 100ms..."))}])
