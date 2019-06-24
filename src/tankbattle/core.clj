@@ -218,6 +218,48 @@
   [& args]
   (init-world 10 10))
 
+(defn update-bullet-positions [{:keys [bullets] :as world}]
+  (assoc world :bullets (mapv move-bullet bullets)))
+
+(defn update-tank-when-hit [tank nr-of-hits]
+  (reduce
+   (fn [acc _] (update-in acc [:energy] dec))
+   tank
+   (range nr-of-hits)))
+
+(update-tank-when-hit {:energy 5} (count [{} {}]))
+
+(defn update-tank-hits [{:keys [bullets tanks] :as world}]
+  (let [bullets-map (map-positions bullets)
+        tanks-map   (map-positions tanks)
+        hit-locs    (s/union (keys bullets-map) (keys tanks-map))]
+    world))
+
+(defn update-tree-hits [{:keys [bullets trees] :as world}]
+  world)
+
+(defn update-wall-hits [{:keys [bullets walls] :as world}]
+  world)
+
+(defn update-explosions [{:keys [bullets tanks trees walls explosions] :as world}]
+  world)
+
+(defn detect-winner [world]
+  world)
+
+(defn apply-tank-events [tank-events {:keys [tanks] :as world}]
+  world)
+
+(defn update-world [tank-events {:keys [tanks bullets trees walls] :as world}]
+  (->> world
+       (update-bullet-positions)
+       (update-tank-hits)
+       (update-tree-hits)
+       (update-wall-hits)
+       (update-explosions)
+       (detect-winner)
+       (apply-tank-events tank-events)))
+
 (comment
 
 ;; Sequence is in line with the order in which the events came in (fair play)

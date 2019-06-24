@@ -162,3 +162,33 @@
       (is (= (move-bullet east)  {:position [4 3] :direction :east}))
       (is (= (move-bullet south) {:position [3 4] :direction :south}))
       (is (= (move-bullet west)  {:position [2 3] :direction :west})))))
+
+(deftest update-bullet-positions-test
+  (testing "should update the positions of the bullets in the world"
+    (let [bullet1       {:position [1 1] :energy 1 :direction :east  :tankid 1}
+          bullet2       {:position [2 2] :energy 1 :direction :south :tankid 2}
+          world         {:bullets    [bullet1 bullet2]
+                         :tanks      :dontcare
+                         :trees      :dontcare
+                         :alltherest :dontcare}
+          result        (update-bullet-positions world)
+          moved-bullets (:bullets result)]
+      (is (= (count moved-bullets) 2))
+      (is (= (into #{} (map :position moved-bullets)) #{[2 1] [2 3]}))
+      (is (= (keys result)  (keys world)))
+      (is (= (keys bullet1) (keys (first moved-bullets)))))))
+
+(deftest update-tank-hits-test
+  (testing "if tanks are hit, tank AND bullet energy should decrease"
+    (let [bullet1 {:position [1 1] :energy 1 :direction :east  :tankid 1}
+          bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
+          bullet3 {:position [2 2] :energy 1 :direction :west  :tankid 1}
+          tank1   {:position [1 1] :energy 7 :hits 0 :kills 0}
+          tank2   {:position [2 2] :energy 7 :hits 0 :kills 0}
+          world   {:bullets  [bullet1 bullet2 bullet3]
+                   :tanks    [tank1 tank2]
+                   :therest  :dontcare}
+          result  (update-tank-hits world)
+          blt-map (map-positions (:bullets world))
+          tnk-map (map-positions (:tanks   world))]
+      (is false))))
