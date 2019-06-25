@@ -179,16 +179,61 @@
       (is (= (keys bullet1) (keys (first moved-bullets)))))))
 
 (deftest update-tank-hits-test
-  (testing "if tanks are hit, tank AND bullet energy should decrease"
+  (testing "for every bullet hit, tank energy should decrease by 1
+            (tank can be hit by multiple bullets at once)
+            In addition, all used bullets involved in a hit should be removed from the world"
     (let [bullet1 {:position [1 1] :energy 1 :direction :east  :tankid 1}
           bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
           bullet3 {:position [2 2] :energy 1 :direction :west  :tankid 1}
-          tank1   {:position [1 1] :energy 7 :hits 0 :kills 0}
-          tank2   {:position [2 2] :energy 7 :hits 0 :kills 0}
-          world   {:bullets  [bullet1 bullet2 bullet3]
+          bullet4 {:position [9 9] :energy 1 :direction :north :tankid 5}
+          tank1   {:position [1 1] :energy 7}
+          tank2   {:position [2 2] :energy 7}
+          world   {:bullets  [bullet1 bullet2 bullet3 bullet4]
                    :tanks    [tank1 tank2]
                    :therest  :dontcare}
-          result  (update-tank-hits world)
-          blt-map (map-positions (:bullets world))
-          tnk-map (map-positions (:tanks   world))]
-      (is false))))
+          result  (update-tank-hits world)]
+      (is (= (keys result) (keys world)))
+      (is (= (result :tanks)   [{:position [1 1], :energy 6} {:position [2 2], :energy 5}]))
+      (is (= (result :bullets  [bullet4])))
+      (is (= (result :therest) :dontcare)))))
+
+;; TODO: notice the duplication with previous test. Lots of refactoring opportunities
+(deftest update-tree-hits-test
+  (testing "for every bullet hit, tree energy should decrease by 1
+            (tree can be hit by multiple bullets at once)
+            In addition, all used bullets involved in a hit should be removed from the world"
+    (let [bullet1 {:position [1 1] :energy 1 :direction :east  :tankid 1}
+          bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
+          bullet3 {:position [2 2] :energy 1 :direction :west  :tankid 1}
+          bullet4 {:position [9 9] :energy 1 :direction :north :tankid 5}
+          tree1   {:position [1 1] :energy 7}
+          tree2   {:position [2 2] :energy 7}
+          world   {:bullets  [bullet1 bullet2 bullet3 bullet4]
+                   :trees    [tree1 tree2]
+                   :therest  :dontcare}
+          result  (update-tree-hits world)]
+      (is (= (keys result) (keys world)))
+      (is (= (result :trees)   [{:position [1 1], :energy 6} {:position [2 2], :energy 5}]))
+      (is (= (result :bullets  [bullet4])))
+      (is (= (result :therest) :dontcare)))))
+
+;; TODO: notice the duplication with previous test. Lots of refactoring opportunities
+(deftest update-wall-hits-test
+  (testing "for every bullet hit, wall energy shouldn't have to decrease by 1,
+            but I'm just making the duplication clear
+            (wall can be hit by multiple bullets at once)
+            In addition, all used bullets involved in a hit should be removed from the world"
+    (let [bullet1 {:position [1 1] :energy 1 :direction :east  :tankid 1}
+          bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
+          bullet3 {:position [2 2] :energy 1 :direction :west  :tankid 1}
+          bullet4 {:position [9 9] :energy 1 :direction :north :tankid 5}
+          wall1   {:position [1 1] :energy -1}
+          wall2   {:position [2 2] :energy -1}
+          world   {:bullets  [bullet1 bullet2 bullet3 bullet4]
+                   :walls    [wall1 wall2]
+                   :therest  :dontcare}
+          result  (update-wall-hits world)]
+      (is (= (keys result) (keys world)))
+      (is (= (result :walls)   [{:position [1 1], :energy -2} {:position [2 2], :energy -3}]))
+      (is (= (result :bullets  [bullet4])))
+      (is (= (result :therest) :dontcare)))))

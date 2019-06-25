@@ -54,3 +54,12 @@ clojure, etc.
 - Jeroen van Wijgerden, who's building a [rendering
   client](https://github.com/jeroenvanw/tank-battle-rendering) and helped
   during design and development of the tankbattle server.
+
+## TODO
+
+- [ ] Refactor hit functions. Might be best to merge them into one function,
+      since I've already extracted the core functionality into smaller
+      functions.
+- [ ] Make smaller tests for the extracted core functions.
+- [ ] Then refactor hit tests into 1 integration test
+- [ ] Calculate explosions
