@@ -178,62 +178,55 @@
       (is (= (keys result)  (keys world)))
       (is (= (keys bullet1) (keys (first moved-bullets)))))))
 
-(deftest update-tank-hits-test
-  (testing "for every bullet hit, tank energy should decrease by 1
-            (tank can be hit by multiple bullets at once)
-            In addition, all used bullets involved in a hit should be removed from the world"
-    (let [bullet1 {:position [1 1] :energy 1 :direction :east  :tankid 1}
-          bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
-          bullet3 {:position [2 2] :energy 1 :direction :west  :tankid 1}
-          bullet4 {:position [9 9] :energy 1 :direction :north :tankid 5}
-          tank1   {:position [1 1] :energy 7}
-          tank2   {:position [2 2] :energy 7}
-          world   {:bullets  [bullet1 bullet2 bullet3 bullet4]
-                   :tanks    [tank1 tank2]
-                   :therest  :dontcare}
-          result  (update-tank-hits world)]
-      (is (= (keys result) (keys world)))
-      (is (= (result :tanks)   [{:position [1 1], :energy 6} {:position [2 2], :energy 5}]))
-      (is (= (result :bullets  [bullet4])))
-      (is (= (result :therest) :dontcare)))))
+(deftest update-energy-when-hit-test
+  (testing "should decrease energy of gameobject with 'nr-of-hits'"
+    (is (= (update-energy-when-hit {:energy 5} 3) {:energy 2}))))
 
-;; TODO: notice the duplication with previous test. Lots of refactoring opportunities
-(deftest update-tree-hits-test
-  (testing "for every bullet hit, tree energy should decrease by 1
-            (tree can be hit by multiple bullets at once)
-            In addition, all used bullets involved in a hit should be removed from the world"
-    (let [bullet1 {:position [1 1] :energy 1 :direction :east  :tankid 1}
-          bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
-          bullet3 {:position [2 2] :energy 1 :direction :west  :tankid 1}
-          bullet4 {:position [9 9] :energy 1 :direction :north :tankid 5}
-          tree1   {:position [1 1] :energy 7}
-          tree2   {:position [2 2] :energy 7}
-          world   {:bullets  [bullet1 bullet2 bullet3 bullet4]
-                   :trees    [tree1 tree2]
-                   :therest  :dontcare}
-          result  (update-tree-hits world)]
-      (is (= (keys result) (keys world)))
-      (is (= (result :trees)   [{:position [1 1], :energy 6} {:position [2 2], :energy 5}]))
-      (is (= (result :bullets  [bullet4])))
-      (is (= (result :therest) :dontcare)))))
+(deftest update-hit-objects-test
+  (testing "should decrease the energy of a gameobject when it's hit by one or more bullets"
+    (let [tanks-position-map  {[1 1] [{:energy 3 :other-properties :dont-care}]
+                               [2 2] [{:energy 9 :other-properties :dont-care}]}
+          bullet-position-map {;; one bullet in position [1 1]
+                               [1 1] [{:properties :dontcare}]
+                               ;; two bullets in position [2 2]
+                               [2 2] [{:properties :dontcare} {:properties :dontcare}]}
+          resulting-tanks     (update-hit-objects tanks-position-map bullet-position-map)]
+      (is (= resulting-tanks [{:energy 2 :other-properties :dont-care}
+                              {:energy 7 :other-properties :dont-care}])))))
 
-;; TODO: notice the duplication with previous test. Lots of refactoring opportunities
-(deftest update-wall-hits-test
-  (testing "for every bullet hit, wall energy shouldn't have to decrease by 1,
-            but I'm just making the duplication clear
-            (wall can be hit by multiple bullets at once)
-            In addition, all used bullets involved in a hit should be removed from the world"
-    (let [bullet1 {:position [1 1] :energy 1 :direction :east  :tankid 1}
-          bullet2 {:position [2 2] :energy 1 :direction :south :tankid 2}
-          bullet3 {:position [2 2] :energy 1 :direction :west  :tankid 1}
-          bullet4 {:position [9 9] :energy 1 :direction :north :tankid 5}
-          wall1   {:position [1 1] :energy -1}
-          wall2   {:position [2 2] :energy -1}
-          world   {:bullets  [bullet1 bullet2 bullet3 bullet4]
-                   :walls    [wall1 wall2]
-                   :therest  :dontcare}
-          result  (update-wall-hits world)]
+(deftest remove-used-bullets-test
+  (testing "should remove bullets that are used / have decreased gameobject energy"
+    (let [bullet-position-map  {[1 1] [{:used   :bullet1}]
+                                [2 2] [{:used   :bullet2}]
+                                [3 3] [{:unused :bullet3}]
+                                [4 4] [{:unused :bullet4} {:unused :bullet5}]}
+          used-bullet-positions #{[1 1] [2 2]}]
+      (is (=
+           (remove-used-bullets bullet-position-map used-bullet-positions)
+           [{:unused :bullet3} {:unused :bullet4} {:unused :bullet5}])))))
+
+(deftest update-object-hits-test
+  (testing "for every bullet hit, tank and tree energy should decrease
+            in addition: all bullets involved in a hit should be removed from the world"
+    (let [bullet1  {:position [1 1]}
+          bullet2a {:position [2 2]}
+          bullet2b {:position [2 2]}
+          bullet4  {:position [4 4]}
+          bullet5  {:position [5 5]}
+          bullet6  {:position [6 6]}
+          tank1    {:position [1 1] :energy 5}
+          tank2    {:position [2 2] :energy 7}
+          tree1    {:position [4 4] :energy 3}
+          wall1    {:position [6 6]}
+          world    {:bullets  [bullet1 bullet2a bullet2b bullet4 bullet5 bullet6]
+                    :tanks    [tank1 tank2]
+                    :trees    [tree1]
+                    :walls    [wall1]
+                    :therest  :dontcare}
+          result   (update-object-hits world)]
       (is (= (keys result) (keys world)))
-      (is (= (result :walls)   [{:position [1 1], :energy -2} {:position [2 2], :energy -3}]))
-      (is (= (result :bullets  [bullet4])))
+      (is (= (result :tanks)   [{:position [1 1] :energy 4} {:position [2 2] :energy 5}]))
+      (is (= (result :trees)   [{:position [4 4] :energy 2}]))
+      (is (= (result :walls)   (world :walls)))
+      (is (= (result :bullets  [bullet5])))
       (is (= (result :therest) :dontcare)))))
