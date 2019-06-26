@@ -57,6 +57,10 @@ clojure, etc.
 
 ## TODO
 
+- [ ] make 'test mode' with keybinds to rest calls
+- [ ] 'room' mechanism
+- [ ] make sort of buffering of world states server side, rendering client
+      fetches a world state every now and then
 - [ ] Refactor hit functions. Might be best to merge them into one function,
       since I've already extracted the core functionality into smaller
       functions.
