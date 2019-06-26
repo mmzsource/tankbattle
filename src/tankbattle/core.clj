@@ -37,6 +37,18 @@
    {}
    gameobjects))
 
+(defn dead-object-positions [object-position-map]
+  (into #{} (keys (filter (fn [[pos [obj]]] (< (obj :energy) 1)) object-position-map))))
+
+(defn remove-objects [object-position-map positions-of-objects-to-remove]
+  (reduce
+   (fn [acc [pos [& objects]]]
+     (if (not (contains? positions-of-objects-to-remove pos))
+       (into acc objects)
+       acc))
+   []
+   object-position-map))
+
 
 ;;;;;;;;;;;;
 ;; BORDER ;;
@@ -65,6 +77,7 @@
 (defn create-walls [cols rows]
   (let [wps (wall-positions cols rows)]
     (mapv (fn [wall-position] {:position wall-position :energy -1}) wps)))
+
 
 ;;;;;;;;;;;
 ;; TANKS ;;
@@ -120,6 +133,12 @@
 (defn execute-cmds [tank cmds]
   (reduce update-tank tank cmds))
 
+(defn apply-tank-events [tank-events {:keys [tanks] :as world}]
+  world)
+
+(defn detect-winner [world]
+  world)
+
 
 ;;;;;;;;;;;;;
 ;; BULLETS ;;
@@ -149,34 +168,21 @@
    []
    object-position-map))
 
-(defn remove-used-bullets [bullets-map used-bullet-positions]
-  (reduce
-   (fn [acc [pos [& bullets]]]
-     (if (not (contains? used-bullet-positions pos))
-       (into acc bullets)
-       acc))
-   []
-   bullets-map))
-
-(defn destroyed? [object]
-  (= (:energy object) 0))
-
-;;;;;;;;;;;
-;; WORLD ;;
-;;;;;;;;;;;
-
 (defn update-bullet-positions [{:keys [bullets] :as world}]
   (assoc world :bullets (mapv move-bullet bullets)))
 
 (defn update-object-hits [{:keys [bullets tanks trees walls] :as world}]
   (let [bullets-map      (map-positions bullets)
         bullet-positions (into #{} (keys bullets-map))
+
         tanks-map        (map-positions tanks)
         tank-positions   (into #{} (keys tanks-map))
         tank-hits        (s/intersection bullet-positions tank-positions)
+
         trees-map        (map-positions trees)
         trees-positions  (into #{} (keys trees-map))
         trees-hits       (s/intersection bullet-positions trees-positions)
+
         walls-map        (map-positions walls)
         walls-positions  (into #{} (keys walls-map))
         walls-hits       (s/intersection bullet-positions walls-positions)
@@ -187,9 +193,9 @@
         ;; Decrease energy of hit trees
         updated-trees (update-hit-objects trees-map bullets-map)
 
-        ;; Remove bullets used on tanks
+        ;; Remove bullets used on tanks, trees and walls
         used-bullet-positions (s/union tank-hits trees-hits walls-hits)
-        updated-bullets       (remove-used-bullets bullets-map used-bullet-positions)]
+        updated-bullets       (remove-objects bullets-map used-bullet-positions)]
 
     ;; now update the world with the newly calculated values
     (-> world
@@ -197,16 +203,47 @@
         (assoc :trees   updated-trees)
         (assoc :bullets updated-bullets))))
 
-(defn update-explosions [{:keys [bullets tanks trees walls explosions] :as world}]
-  ;; replace tanks and trees with energy <= 0 with explosions
-  ;; update explosion energies
-  world)
 
-(defn detect-winner [world]
-  world)
+;;;;;;;;;;;;;;;;
+;; EXPLOSIONS ;;
+;;;;;;;;;;;;;;;;
 
-(defn apply-tank-events [tank-events {:keys [tanks] :as world}]
-  world)
+
+(defn update-explosion-energy [explosion-position-map]
+  (into {} (map (fn [[pos [obj]]] {pos [(update-in obj [:energy] dec)]}) explosion-position-map)))
+
+(defn cleanup-explosions [explosion-position-map]
+  (filter (fn [[pos [obj]]] (> (obj :energy) 0)) explosion-position-map))
+
+(defn create-new-explosions [explosion-positions]
+  (mapv (fn [pos] {:position pos :energy 7}) explosion-positions))
+
+(defn update-explosions [{:keys [tanks trees explosions] :as world}]
+  (let [tank-map             (map-positions tanks)
+        dead-tank-positions  (dead-object-positions tank-map)
+        updated-tanks        (remove-objects tank-map dead-tank-positions)
+
+        tree-map             (map-positions trees)
+        dead-tree-positions  (dead-object-positions tree-map)
+        updated-trees        (remove-objects tree-map dead-tree-positions)
+
+        explosion-map        (map-positions explosions)
+        decreased-explosions (update-explosion-energy explosion-map)
+        dead-explosion-pos   (dead-object-positions decreased-explosions)
+        cleanedup-explosions (remove-objects decreased-explosions dead-explosion-pos)
+        new-explosion-pos    (s/union dead-tank-positions dead-tree-positions)
+        updated-explosions   (into cleanedup-explosions (create-new-explosions new-explosion-pos))]
+
+    (-> world
+        (assoc :tanks      updated-tanks)
+        (assoc :trees      updated-trees)
+        (assoc :explosions updated-explosions))))
+
+
+;;;;;;;;;;;
+;; WORLD ;;
+;;;;;;;;;;;
+
 
 (defn update-world [tank-events {:keys [tanks bullets trees walls] :as world}]
   (->> world
@@ -263,7 +300,7 @@
 (def bullets [{:position [4 4] :energy 1 :direction :east}])
 
 (def explosions [{:position [1 2] :energy 7}
-                 {:position [5 5] :energy 4}])
+                 {:position [5 5] :energy 1}])
 
 (def world
   {:dimensions {:width 7 :height 7}
