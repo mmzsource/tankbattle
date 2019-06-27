@@ -53,25 +53,25 @@ about the battlefield. For example:
  :tanks      [{:id          1
                :name        "Unicorn"
                :position    [2 2]
-			   :energy      5
+               :energy      5
                :orientation :south
-			   :last-move   #INST20190627T16:53:01.385
-			   :restarted   #INST20190627T16:53:03.385
+               :last-move   #INST20190627T16:53:01.385
+               :restarted   #INST20190627T16:53:03.385
                :color       :blue
                :last-shot   #INST20190627T16:54:09.026
                :reloaded    #INST20190627T16:54:14.026
-			   :hits        7
-			   :kills       2}]
+               :hits        7
+               :kills       2}]
  :trees      [{:position [3 3] :energy 3}]
  :walls      [{:position [0 0]}
               {:position [1 0]}
               {:position [2 0]}]
  :explosions [{:position [4 4]
-			   :start    #INST20190627T16:53:02.667
-			   :end      #INST20190627T16:53:05.667}
+               :start    #INST20190627T16:53:02.667
+               :end      #INST20190627T16:53:05.667}
               {:position [5 5]
-			   :start    #INST20190627T16:53:01.742
-			   :end      #INST20190627T16:53:04.742}]}
+               :start    #INST20190627T16:53:01.742
+               :end      #INST20190627T16:53:04.742}]}
 ```
 
 In addition to getting that information upon every REST API call, this
