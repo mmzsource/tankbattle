@@ -76,7 +76,7 @@
 
 (defn create-walls [cols rows]
   (let [wps (wall-positions cols rows)]
-    (mapv (fn [wall-position] {:position wall-position :energy -1}) wps)))
+    (mapv (fn [wall-position] {:position wall-position}) wps)))
 
 
 ;;;;;;;;;;;
@@ -310,15 +310,15 @@
    :bullets    bullets
    :explosions explosions})
 
-
 ;; TODO: position tanks and trees randomly based on grid size
 (defn init-world [cols rows]
-  {:dimensions {:width cols :height rows}
-   :tanks      tanks
-   :trees      trees
-   :walls      (walls cols rows)
-   :bullets    bullets
-   :explosions explosions})
+  {:last-update (System/currentTimeMillis)
+   :dimensions  {:width cols :height rows}
+   :tanks       tanks
+   :trees       trees
+   :walls       (create-walls cols rows)
+   :bullets     bullets
+   :explosions  explosions})
 
 (defn -main
   "It all starts here"

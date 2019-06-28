@@ -7,45 +7,33 @@
 ; simple atom for exposing a global function so the server can close itself
 (def server (atom nil))
 
-(def new-world {:count 0})
+(def new-world (tb/init-world 32 18))
 
-(def world (atom {:count 0}))
+(def world (atom (tb/init-world 32 18)))
 
-(defn world-resource
-  []
-  "Modifiable world. Look at yada.resources.atom-resource for ways to add
-  last-modified headers and the like"
-  (let [state world]
-    (yada/resource
-      {:methods {:get  {:produces "application/json"
-                        :response (fn [ctx] @state)}}})))
+(defn world-resource []
+  (yada/resource
+   {:methods {:get  {:produces "application/json"
+                     :response (fn [ctx] @world)}}}))
 
-(defn update-world-resource
-  []
-  "Modifiable world. Look at yada.resources.atom-resource for ways to add
-  last-modified headers and the like"
-  (let [state world]
-    (yada/resource
-     {:methods {:post
-                {:response (fn [ctx]
-                             (swap! state update-in [:count] inc))}}})))
+(defn update-world-resource []
+  (yada/resource
+   {:methods {:post
+              {:response (fn [ctx]
+                           (swap! world assoc :last-update (System/currentTimeMillis)))}}}))
 
-(defn reset-world-resource
-  []
-  "Modifiable world. Look at yada.resources.atom-resource for ways to add
-  last-modified headers and the like"
-  (let [state world]
-    (yada/resource
-     {:methods {:post
-                {:response (fn [ctx]
-                             (reset! world new-world))}}})))
+(defn reset-world-resource []
+  (yada/resource
+   {:methods {:post
+              {:response (fn [ctx]
+                           (reset! world new-world))}}}))
 
 (defn routes []
   ["/"
    {
     "world"  (world-resource)
-    "update" (update-world-resource)
     "reset"  (reset-world-resource)
+    "update" (update-world-resource)
     "die"     (yada/as-resource (fn []
                                   (future (Thread/sleep 100) (@server))
                                   "shutting down in 100ms..."))}])

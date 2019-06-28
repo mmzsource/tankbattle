@@ -61,9 +61,9 @@ clojure, etc.
 
 Create REST endpoints end-to-end in this order:
 
-- [ ] POST create-world (includes working with atom in yada and finding proper time
+- [X] POST create-world (includes working with atom in yada and finding proper time
   library)
-- [ ] GET world
+- [X] GET world
 - [ ] POST create tank subscription
 - [ ] POST create start game
 - [ ] POST create tank command endpoint

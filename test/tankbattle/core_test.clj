@@ -85,7 +85,7 @@
     (let [wls (create-walls 4 6)]
       (is (vector? wls))
       (is (= (count wls) 16))
-      (is (= (keys (first wls)) [:position :energy])))))
+      (is (= (keys (first wls)) [:position])))))
 
 
 ;;;;;;;;;;;
