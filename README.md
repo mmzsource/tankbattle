@@ -57,13 +57,83 @@ clojure, etc.
 
 ## TODO
 
-- [ ] make 'test mode' with keybinds to rest calls
-- [ ] 'room' mechanism
-- [ ] make sort of buffering of world states server side, rendering client
-      fetches a world state every now and then
-- [ ] Refactor hit functions. Might be best to merge them into one function,
-      since I've already extracted the core functionality into smaller
-      functions.
-- [ ] Make smaller tests for the extracted core functions.
-- [ ] Then refactor hit tests into 1 integration test
-- [ ] Calculate explosions
+### Plan
+
+Create REST endpoints end-to-end in this order:
+
+- [ ] create-world (includes working with atom in yada and finding proper time
+  library)
+- [ ] create tank subscription
+- [ ] create start game
+- [ ] create tank command endpoint
+- [ ] fill in update-world 'details'
+
+If time permits:
+
+- [ ] Manually Test (otherwise rely on the automated tests)
+- [ ] Test client (so you can see the requests and responses in the developer
+      console?)
+- [ ] Store all game events (so you can replay the complete game): game was
+  reset, tank subscribed, game started, tank command executed, winner detected
+- [ ] Swagger docs. (Or describe in the docs that the REST API isn't described
+  properly, because Dutch army management 'wants working tanks, instead of
+  comprehensive documentation')
+- [ ] DOS detection (and prevention?)
+- [ ] gists with already prepared tanks in several different languages
+
+### Tank battle design and pseudocode
+
+#### Reset game
+
+- [ ] create new world atom
+  - [ ] create a wall around the world
+  - [ ] put some trees and walls inside it
+  - [ ] create list of player colors to pick from
+
+#### Tank subscription
+
+- [ ] create tank
+  - [ ] randomly create id
+  - [ ] associate provided name with tank (or pick from default list if none is
+    provided (default list is populated with 'anonymous' to begin with))
+  - [ ] pick color randomly from list of still available colors and dissoc that
+    color from the list
+  - [ ] update last-move, restarted, last-shot, reloaded
+  - [ ] when color list is empty, lock game for subscription
+
+#### Start game
+
+- [ ] lock game for subscription
+- [ ] start game timer
+
+#### Tank command
+
+- [ ] if end time is not reached yet:
+  - [ ] execute POSTed commands in order
+    - [ ] :fire can only be executed 5 seconds after last shot && 2 seconds
+      after last move
+    - [ ] :move can only be executed 2 seconds after last :move
+
+    - [ ] In case of :fire
+      - [ ] scan the row or column the tank is oriented in to see if something is hit
+      - [ ] If other tank is hit:
+        - [ ] update other tank (decrement energy)
+        - [ ] update firing tank (increment hits)
+        - [ ] if tank has 0 energy left
+          - [ ] replace other tank for an explosion
+          - [ ] update firing tank (increment kills)
+      - [ ] If tree is hit:
+        - [ ] update tree (decrement energy)
+        - [ ] if tree has 0 energy left
+          - [ ] replace tree for an explosion
+
+    - [ ] in case of :move
+      - [ ] if move-to cell is empty
+        - [ ] move
+        - [ ] update last-move and restarted times
+
+    - [ ] ?remove expired explosions?
+    - [ ] calculate winner
+
+- [ ] otherwise
+  - [ ] calculate winner
