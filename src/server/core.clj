@@ -28,12 +28,25 @@
               {:response (fn [ctx]
                            (reset! world new-world))}}}))
 
+(defn subscribe-tank-resource []
+  (yada/resource
+   {:methods {:post
+              {:parameters {:body {:name s/Str}}
+               :consumes   "application/json"
+               :response   (fn [ctx]
+                             (let [body (get-in ctx [:parameters :body])]
+                               (swap! world assoc :name (body :name))
+                               (swap! world assoc :last-update (System/currentTimeMillis))))}}}))
+
 (defn routes []
   ["/"
    {
-    "world"  (world-resource)
-    "reset"  (reset-world-resource)
-    "update" (update-world-resource)
+    "world"     (world-resource)
+    "reset"     (reset-world-resource)
+    "update"    (update-world-resource)
+
+    "subscribe" (subscribe-tank-resource)
+
     "die"     (yada/as-resource (fn []
                                   (future (Thread/sleep 100) (@server))
                                   "shutting down in 100ms..."))}])
