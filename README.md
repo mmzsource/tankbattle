@@ -61,11 +61,15 @@ clojure, etc.
 
 Create REST endpoints end-to-end in this order:
 
-- [ ] create-world (includes working with atom in yada and finding proper time
+- [ ] POST create-world (includes working with atom in yada and finding proper time
   library)
-- [ ] create tank subscription
-- [ ] create start game
-- [ ] create tank command endpoint
+- [ ] GET world
+- [ ] POST create tank subscription
+- [ ] POST create start game
+- [ ] POST create tank command endpoint
+
+Then in the domain model:
+
 - [ ] fill in update-world 'details'
 
 If time permits:
