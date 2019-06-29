@@ -84,17 +84,41 @@
 ;;;;;;;;;;;
 
 
-(def commands #{:drive :stop :turn-north :turn-east :turn-south :turn-west :fire :hold-fire})
+(def commands #{:move-north :move-east :move-south :move-west :fire})
 
-(defn create-tank [id position color]
+(defn create-tank [id position color name]
   {:id          id
+   :name        name
    :position    position
    :orientation (first (shuffle orientations))
    :energy      10
    :color       color
-   :moving      false
-   :firing      false
-   :bullets     100})
+   :last-shot   1234567890
+   :reloaded    1234572890
+   :last-move   1234567891
+   :restarted   1234569891})
+
+(defn subscribe-tank
+  [world tank-name]
+  ;; only subscribe when there is still room left for tanks
+  (if (< (count (world :tanks)) 4)
+    (let [available-ids       (world :av-ids)
+          id                  (first available-ids)
+          remaining-ids       (into #{} (rest available-ids))
+          available-pos       (world :av-pos)
+          position            (first available-pos)
+          remaining-pos       (into #{} (rest available-pos))
+          available-colors    (world :av-cls)
+          color               (first available-colors)
+          remaining-colors    (into #{} (rest available-colors))
+          new-tank            (create-tank id position color tank-name)]
+      (-> world
+          (assoc     :last-update (System/currentTimeMillis))
+          (assoc     :av-ids      remaining-ids)
+          (assoc     :av-pos      remaining-pos)
+          (assoc     :av-cls      remaining-colors)
+          (update-in [:tanks]     conj new-tank)))
+    world))
 
 (defn drive [tank]
   (merge tank {:moving true}))
@@ -253,78 +277,52 @@
        (detect-winner)
        (apply-tank-events tank-events)))
 
-(def tanks [{:id          1
-             :position    [2 2]
-             :orientation :south
-             :energy      5
-             :color       :blue
-             :moving      true
-             :firing      false
-             :bullets     256}
-            {:id          2
-             :position    [3 4]
-             :orientation :east
-             :energy      2
-             :color       :red
-             :moving      false
-             :firing      true
-             :bullets     311}])
+;; Hardcoded! Based on [32 18] grid!
+(def trees [{:position [15  3] :energy 3}
+            {:position [18  3] :energy 3}
+            {:position [15  4] :energy 3}
+            {:position [15  5] :energy 3}
+            {:position [15  6] :energy 3}
+            {:position [15  7] :energy 3}
 
-(def trees [{:position [3 3] :energy 3}])
+            {:position [ 3  7] :energy 3}
+            {:position [ 4  7] :energy 3}
+            {:position [ 4  8] :energy 3}
+            {:position [ 4  9] :energy 3}
+            {:position [ 3 10] :energy 3}
+            {:position [ 4 10] :energy 3}
 
-(def walls [{:position [0 0]}
-            {:position [1 0]}
-            {:position [2 0]}
-            {:position [3 0]}
-            {:position [4 0]}
-            {:position [5 0]}
-            {:position [6 0]}
-            {:position [0 1]}
-            {:position [6 1]}
-            {:position [0 2]}
-            {:position [6 2]}
-            {:position [0 3]}
-            {:position [6 3]}
-            {:position [0 4]}
-            {:position [6 4]}
-            {:position [0 5]}
-            {:position [6 5]}
-            {:position [0 6]}
-            {:position [1 6]}
-            {:position [2 6]}
-            {:position [3 6]}
-            {:position [4 6]}
-            {:position [5 6]}
-            {:position [6 6]}])
+            {:position [27  7] :energy 3}
+            {:position [28  7] :energy 3}
+            {:position [27  8] :energy 3}
+            {:position [27  9] :energy 3}
+            {:position [27 10] :energy 3}
+            {:position [28 10] :energy 3}
 
-(def bullets [{:position [4 4] :energy 1 :direction :east}])
+            {:position [15 13] :energy 3}
+            {:position [16 13] :energy 3}
+            {:position [17 13] :energy 3}
+            {:position [18 13] :energy 3}
+            {:position [15 14] :energy 3}
+            {:position [18 14] :energy 3}])
 
-(def explosions [{:position [1 2] :energy 7}
-                 {:position [5 5] :energy 1}])
-
-(def world
-  {:dimensions {:width 7 :height 7}
-   :tanks      tanks
-   :trees      trees
-   :walls      walls
-   :bullets    bullets
-   :explosions explosions})
-
-;; TODO: position tanks and trees randomly based on grid size
-(defn init-world [cols rows]
-  {:last-update (System/currentTimeMillis)
-   :dimensions  {:width cols :height rows}
-   :tanks       tanks
-   :trees       trees
-   :walls       (create-walls cols rows)
-   :bullets     bullets
-   :explosions  explosions})
+(defn init-world []
+  (let [cols 32 rows 18]                                              ; hardcoded!
+    {:last-update (System/currentTimeMillis)
+     :dimensions  {:width cols :height rows}
+     :av-ids      #{1 2 3 4}                                          ; hardcoded! assumption: 4 tanks per game
+     :av-pos      (into #{} (shuffle #{[1 8] [17 1] [30 9] [16 16]})) ; hardcoded! based on [32 18] grid!
+     :av-cls      (into #{} (shuffle #{:red :green :yellow :blue}))   ; hardcoded! assumption: 4 tanks per game
+     :tanks       []
+     :trees       trees
+     :walls       (create-walls cols rows)
+     :lasers      []
+     :explosions  []}))
 
 (defn -main
   "It all starts here"
   [& args]
-  (init-world 10 10))
-
+  (init-world))
 
 (comment
 ;; Sequence is in line with the order in which the events came in (fair play)

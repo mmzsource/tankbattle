@@ -95,12 +95,38 @@
 
 (deftest tank-creation
   (testing "creation of a tank"
-    (let [tank (create-tank 1 [2 3] :green)]
+    (let [tank (create-tank 1 [2 3] :green "ALPHA-BRAVO-CHARLIE")]
       (is (map? tank))
-      (is (= (keys tank) [:id :position :orientation :energy :color :moving :firing :bullets]))
+      (is (= (into #{} (keys tank))
+             #{:id :name :position :orientation :energy :color :last-shot :reloaded :last-move :restarted}))
       (is (= (tank :id)       1))
+      (is (= (tank :name)     "ALPHA-BRAVO-CHARLIE"))
       (is (= (tank :position) [2 3]))
       (is (= (tank :color)    :green)))))
+
+(deftest tank-subscription
+  (testing "subscribing a tank to a game"
+    (let [old-world {:last-update 123567890
+                     :av-ids      #{1 2 3 4}
+                     :av-pos      #{[1 1] [2 2] [3 3] [4 4]}
+                     :av-cls      #{:red :green :yellow :blue}
+                     :tanks       []}
+          new-world (subscribe-tank old-world "Neo")
+          new-tank  (first (new-world :tanks))]
+      (is (= (count (:tanks  new-world)) 1))
+      (is (= (count (:av-ids new-world)) 3))
+      (is (= (count (:av-pos new-world)) 3))
+      (is (= (count (:av-cls new-world)) 3))
+      (is (= (conj (new-world :av-ids) (new-tank :id))       (old-world :av-ids)))
+      (is (= (conj (new-world :av-pos) (new-tank :position)) (old-world :av-pos)))
+      (is (= (conj (new-world :av-cls) (new-tank :color))    (old-world :av-cls)))
+      (is (> (new-world :last-update) (old-world :last-update))))))
+
+(deftest tank-subscription-locked-when-all-positions-are-taken
+  (testing "if gameboard is filled, no more tanks are able to subscribe"
+    (let [old-world {:tanks [{:tank :dummy} {:tank :dummy} {:tank :dummy} {:tank :dummy}]}
+          new-world (subscribe-tank old-world "Dr.Strange")]
+      (is (= new-world old-world)))))
 
 (deftest tank-driving
   (testing "tank reacts to driving command"

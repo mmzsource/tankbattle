@@ -7,9 +7,9 @@
 ; simple atom for exposing a global function so the server can close itself
 (def server (atom nil))
 
-(def new-world (tb/init-world 32 18))
+(def new-world (tb/init-world))
 
-(def world (atom (tb/init-world 32 18)))
+(def world (atom (tb/init-world)))
 
 (defn world-resource []
   (yada/resource
@@ -34,9 +34,9 @@
               {:parameters {:body {:name s/Str}}
                :consumes   "application/json"
                :response   (fn [ctx]
-                             (let [body (get-in ctx [:parameters :body])]
-                               (swap! world assoc :name (body :name))
-                               (swap! world assoc :last-update (System/currentTimeMillis))))}}}))
+                             (let [name          (get-in ctx [:parameters :body :name])
+                                   updated-world (tb/subscribe-tank @world name)]
+                               (reset! world updated-world)))}}}))
 
 (defn routes []
   ["/"
@@ -47,9 +47,9 @@
 
     "subscribe" (subscribe-tank-resource)
 
-    "die"     (yada/as-resource (fn []
-                                  (future (Thread/sleep 100) (@server))
-                                  "shutting down in 100ms..."))}])
+    "die"       (yada/as-resource (fn []
+                                    (future (Thread/sleep 100) (@server))
+                                    "shutting down in 100ms..."))}])
 
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})

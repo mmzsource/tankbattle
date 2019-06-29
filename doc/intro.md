@@ -22,22 +22,16 @@ aut faciam** or "I shall either find a way or make one" is our motto!
 
 # Tank Movement
 
-To drive your tanks you can either `[:move-north]`, `[:move-east]`,
-`[:move-south]` or `[:move-west]`. The tanks will move one tank-length in that
+To drive your tanks you can either `:move-north`, `:move-east`,
+`:move-south` or `:move-west`. The tanks will move one tank-length in that
 direction on the battlefield, but the tank engines are known to drop dead
 directly after the move and restarting the engine costs 2 seconds. All movement
 commands given within this 2 seconds time-frame are simply neglected.
 
-To fire the canon, you simply send the command `[:fire]`. Due to safety reasons a
-tank can only `[:fire]` after it hasn't moved for 2 seconds. The reloading mechanism
+To fire the canon, you simply send the command `:fire`. Due to safety reasons a
+tank can only `:fire` after it hasn't moved for 2 seconds. The reloading mechanism
 is terribly slow and you can only fire 5 seconds after your last shot. All fire
 commands given within this 5 seconds time-frame are completely neglected.
-
-You are allowed to group commands, like this `[:fire, :move-north]`. You could
-also combine commands like this `[:move-north, :move-north, :move-east]`, but a
-good reader will understand that the second and third command are useless
-(because of the restarting of the engine). The first command *might* be useless.
-That depends on the last time a move command was given for this particular tank.
 
 # Battlefield feedback
 

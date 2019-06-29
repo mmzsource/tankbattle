@@ -64,7 +64,7 @@ Create REST endpoints end-to-end in this order:
 - [X] POST create-world (includes working with atom in yada and finding proper time
   library)
 - [X] GET world
-- [ ] POST create tank subscription
+- [X] POST create tank subscription
 - [ ] POST create start game
 - [ ] POST create tank command endpoint
 
@@ -89,25 +89,25 @@ If time permits:
 
 #### Reset game
 
-- [ ] create new world atom
-  - [ ] create a wall around the world
-  - [ ] put some trees and walls inside it
-  - [ ] create list of player colors to pick from
+- [X] create new world atom
+  - [X] create a wall around the world
+  - [X] put some trees and walls inside it
+  - [X] create list of player colors to pick from
 
 #### Tank subscription
 
-- [ ] create tank
-  - [ ] randomly create id
-  - [ ] associate provided name with tank (or pick from default list if none is
+- [X] create tank
+  - [X] randomly create id
+  - [X] associate provided name with tank (or pick from default list if none is
     provided (default list is populated with 'anonymous' to begin with))
-  - [ ] pick color randomly from list of still available colors and dissoc that
+  - [X] pick color randomly from list of still available colors and dissoc that
     color from the list
-  - [ ] update last-move, restarted, last-shot, reloaded
-  - [ ] when color list is empty, lock game for subscription
+  - [X] update last-move, restarted, last-shot, reloaded
+  - [X] when color list is empty, lock game for subscription
 
 #### Start game
 
-- [ ] lock game for subscription
+- [X] lock game for subscription
 - [ ] start game timer
 
 #### Tank command
