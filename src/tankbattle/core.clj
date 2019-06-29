@@ -8,6 +8,7 @@
 
 (def orientations #{:north :east :south :west})
 
+
 ;;;;;;;;;;;;;;;
 ;; POSITIONS ;;
 ;;;;;;;;;;;;;;;
@@ -120,45 +121,22 @@
           (update-in [:tanks]     conj new-tank)))
     world))
 
-(defn drive [tank]
-  (merge tank {:moving true}))
-
-(defn stop [tank]
-  (merge tank {:moving false}))
-
-(defn turn [tank orientation]
-  (merge tank {:orientation orientation}))
+(defn move [world tankid direction]
+  world)
 
 (defn fire [tank]
   (if-not (tank :moving)
     (merge tank {:firing true})
     tank))
 
-(defn hold-fire [tank]
-  (merge tank {:firing false}))
-
-(defn shot-bullet [tank]
-  (if (> (:bullets tank) 0)
-    (update tank :bullets dec)
-    tank))
-
-(defn update-tank [tank cmd]
+(defn update-tank [world tankid cmd]
   (cond
-    (= cmd :drive)      (drive     tank)
-    (= cmd :stop)       (stop      tank)
-    (= cmd :turn-north) (turn      tank :north)
-    (= cmd :turn-east)  (turn      tank :east)
-    (= cmd :turn-south) (turn      tank :south)
-    (= cmd :turn-west)  (turn      tank :west)
-    (= cmd :fire)       (fire      tank)
-    (= cmd :hold-fire)  (hold-fire tank)
-    :else               tank))
-
-(defn execute-cmds [tank cmds]
-  (reduce update-tank tank cmds))
-
-(defn apply-tank-events [tank-events {:keys [tanks] :as world}]
-  world)
+    (= cmd :move-north) (move world tankid :north)
+    (= cmd :move-east)  (move world tankid :east)
+    (= cmd :move-south) (move world tankid :south)
+    (= cmd :move-west)  (move world tankid :west)
+    (= cmd :fire)       (fire world tankid)
+    :else               world))
 
 (defn detect-winner [world]
   world)
@@ -274,8 +252,7 @@
        (update-bullet-positions)
        (update-object-hits)
        (update-explosions)
-       (detect-winner)
-       (apply-tank-events tank-events)))
+       (detect-winner)))
 
 ;; Hardcoded! Based on [32 18] grid!
 (def trees [{:position [15  3] :energy 3}
@@ -302,6 +279,7 @@
             {:position [15 13] :energy 3}
             {:position [16 13] :energy 3}
             {:position [17 13] :energy 3}
+
             {:position [18 13] :energy 3}
             {:position [15 14] :energy 3}
             {:position [18 14] :energy 3}])
