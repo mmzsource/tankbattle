@@ -47,31 +47,37 @@ the REST API, you will get a response containing all the information gathered
 about the battlefield. For example:
 
 ```
-{:dimensions {:width 700 :height 400}
- :game-start #INST20190627T16:50:53.550
- :game-end   #INST20190627T16:55:53.550
+{:dimensions  {:width 32 :height 18}
+ :game-start  1561786922412
+ :game-end    1561787222412
+ :last-update 1561786927310
  :tanks      [{:id          1
                :name        "Unicorn"
                :position    [2 2]
                :energy      5
                :orientation :south
-               :last-move   #INST20190627T16:53:01.385
-               :restarted   #INST20190627T16:53:03.385
+               :last-move   1561786983247
+               :restarted   1561786985247
                :color       :blue
-               :last-shot   #INST20190627T16:54:09.026
-               :reloaded    #INST20190627T16:54:14.026
+               :last-shot   1561786922412
+               :reloaded    1561786927412
                :hits        7
                :kills       2}]
  :trees      [{:position [3 3] :energy 3}]
  :walls      [{:position [0 0]}
               {:position [1 0]}
               {:position [2 0]}]
+ :lasers     [{:start-position [3 1]
+               :end-position   [7 1]
+			   :direction      :west
+			   :start          1561786922412
+			   :end            1561786923412}]
  :explosions [{:position [4 4]
-               :start    #INST20190627T16:53:02.667
-               :end      #INST20190627T16:53:05.667}
+               :start    1561786922412
+               :end      1561786925412}
               {:position [5 5]
-               :start    #INST20190627T16:53:01.742
-               :end      #INST20190627T16:53:04.742}]}
+               :start    1561786922412
+               :end      1561786925412}]}
 ```
 
 In addition to getting that information upon every REST API call, this
