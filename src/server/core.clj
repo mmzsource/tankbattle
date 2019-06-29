@@ -38,14 +38,24 @@
                                    updated-world (tb/subscribe-tank @world name)]
                                (reset! world updated-world)))}}}))
 
+(defn start-game-resource []
+  (yada/resource
+   {:methods {:post
+              {:response (fn [ctx]
+                           (let [updated-world (tb/start-game @world)]
+                             (reset! world updated-world)))}}}))
+
+
 (defn routes []
   ["/"
    {
     "world"     (world-resource)
+    "subscribe" (subscribe-tank-resource)
     "reset"     (reset-world-resource)
+    "start"     (start-game-resource)
     "update"    (update-world-resource)
 
-    "subscribe" (subscribe-tank-resource)
+
 
     "die"       (yada/as-resource (fn []
                                     (future (Thread/sleep 100) (@server))

@@ -247,6 +247,43 @@
 ;;;;;;;;;;;
 
 
+(defn started? [world]
+  (contains? world :game-end))
+
+(defn players-subscribed?
+  "more than zero players subscribed?"
+  [world]
+  (> (count (world :tanks)) 0))
+
+(comment
+
+; not yet needed
+
+  (defn running? [world]
+    (let [currentTimeMillis (System/currentTimeMillis)]
+      (and (started? world)
+           (> currentTimeMillis (world :game-start))
+           (< currentTimeMillis (world :game-end)))))
+
+; not yet needed
+
+  (defn ended? [world]
+    (and (started? world)
+         (> (System/currentTimeMillis) (world :game-end))))
+
+)
+
+(defn start-game [world]
+  (if (and (not (started? world))
+           (players-subscribed? world))
+    (let [currentTimeMillis     (System/currentTimeMillis)
+          gameDurationInMinutes 5]
+      (-> world
+          (assoc :last-updated currentTimeMillis)
+          (assoc :game-start   currentTimeMillis)
+          (assoc :game-end     (+ currentTimeMillis (* gameDurationInMinutes 60 1000)))))
+    world))
+
 (defn update-world [tank-events {:keys [tanks bullets trees walls] :as world}]
   (->> world
        (update-bullet-positions)
