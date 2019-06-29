@@ -13,8 +13,8 @@
 
 (defn world-resource []
   (yada/resource
-   {:methods {:get  {:produces "application/json"
-                     :response (fn [ctx] @world)}}}))
+   {:methods        {:get  {:produces #{"application/json" "application/edn"}
+                            :response (fn [ctx] @world)}}}))
 
 (defn update-world-resource []
   (yada/resource
