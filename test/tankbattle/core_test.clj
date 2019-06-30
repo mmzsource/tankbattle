@@ -94,6 +94,29 @@
 ;;;;;;;;;;;
 
 
+(deftest find-tank-test
+  (testing "finding a tank in the world"
+    (let [world {:tanks [{:id 1} {:id 2}]}]
+      (is (= (find-tank world 1) {:id 1}))
+      (is (= (find-tank world 2) {:id 2}))
+      (is (= (find-tank world 3) nil)))))
+
+(deftest valid-tankid-test
+  (testing "is a given tankid (still) valid?"
+    (let [world {:tanks [{:id 1} {:id 2}]}]
+      (is (valid-tankid? world 1))
+      (is (valid-tankid? world 2))
+      (is (not (valid-tankid? world 3))))))
+
+(deftest valid-tank-cmd-test
+  (testing "valid tank commands"
+    (is (valid-tank-cmd? "north"))
+    (is (valid-tank-cmd? "east"))
+    (is (valid-tank-cmd? "south"))
+    (is (valid-tank-cmd? "west"))
+    (is (valid-tank-cmd? "fire"))
+    (is (not (valid-tank-cmd? "burp!")))))
+
 (deftest tank-creation
   (testing "creation of a tank"
     (let [tank (create-tank 1 [2 3] :green "ALPHA-BRAVO-CHARLIE")]

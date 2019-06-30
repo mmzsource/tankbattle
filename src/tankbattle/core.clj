@@ -85,7 +85,15 @@
 ;;;;;;;;;;;
 
 
-(def commands #{:move-north :move-east :move-south :move-west :fire})
+(defn find-tank [world tankid]
+  (let [tanks (world :tanks)]
+    (first (filter #(= (% :id) tankid) tanks))))
+
+(defn valid-tankid? [world tankid]
+  (not (nil? (find-tank world tankid))))
+
+(defn valid-tank-cmd? [cmd]
+  (contains? #{"north" "east" "south" "west" "fire"} cmd))
 
 (defn create-tank [id position color name]
   {:id          id
