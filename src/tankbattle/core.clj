@@ -97,7 +97,9 @@
    :last-shot   1234567890
    :reloaded    1234572890
    :last-move   1234567891
-   :restarted   1234569891})
+   :restarted   1234569891
+   :hits        []
+   :kills       []})
 
 (defn subscribe-tank
   [world tank-name]
@@ -295,9 +297,9 @@
 (def trees [{:position [15  3] :energy 3}
             {:position [18  3] :energy 3}
             {:position [15  4] :energy 3}
-            {:position [15  5] :energy 3}
-            {:position [15  6] :energy 3}
-            {:position [15  7] :energy 3}
+            {:position [16  4] :energy 3}
+            {:position [17  4] :energy 3}
+            {:position [18  4] :energy 3}
 
             {:position [ 3  7] :energy 3}
             {:position [ 4  7] :energy 3}
@@ -316,7 +318,6 @@
             {:position [15 13] :energy 3}
             {:position [16 13] :energy 3}
             {:position [17 13] :energy 3}
-
             {:position [18 13] :energy 3}
             {:position [15 14] :energy 3}
             {:position [18 14] :energy 3}])
