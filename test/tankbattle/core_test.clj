@@ -99,7 +99,8 @@
     (let [tank (create-tank 1 [2 3] :green "ALPHA-BRAVO-CHARLIE")]
       (is (map? tank))
       (is (= (into #{} (keys tank))
-             #{:id :name :position :orientation :energy :color :last-shot :reloaded :last-move :restarted}))
+             #{:id :name :position :orientation :energy :color
+               :last-shot :reloaded :last-move :restarted :hits :kills}))
       (is (= (tank :id)       1))
       (is (= (tank :name)     "ALPHA-BRAVO-CHARLIE"))
       (is (= (tank :position) [2 3]))
@@ -136,6 +137,47 @@
       (is (= (fire moving-tank)  {:moving true :firing false}))
       (is (= (fire stopped-tank) {:moving false :firing true})))))
 
+(deftest move-tank-to-empty-position
+  (testing "moving tank to an empty position"
+    (let [world {:walls   []
+                 :trees   []
+                 :tanks   [{:id 1 :position [2 2] :restarted 12345}]
+                 :therest :dontcare}
+          north (move world 1 "north")
+          east  (move world 1 "east")
+          south (move world 1 "south")
+          west  (move world 1 "west")]
+
+      (is (= ((first (north :tanks)) :position) [2 1]))
+      (is (= ((first (east  :tanks)) :position) [3 2]))
+      (is (= ((first (south :tanks)) :position  [2 3])))
+      (is (= ((first (west  :tanks)) :position) [1 2])))))
+
+(deftest cannot-move-tank-to-occupied-position
+  (testing "you cannot move a tank to an occupied position
+            to test that, there are walls, trees and other tanks surrounding
+            the tank under test"
+    (let [world {:walls [{:position [2 1]}]
+                 :trees [{:position [3 2]} {:position [2 3]}]
+                 :tanks [{:id 1 :position [2 2] :restarted 12345}
+                         {:id 2 :position [1 2] :restarted 67890}]}
+          north (move world 1 "north")
+          east  (move world 1 "east")
+          south (move world 1 "south")
+          west  (move world 1 "west")]
+      (is (= north world))
+      (is (= east  world))
+      (is (= south world))
+      (is (= west  world)))))
+
+(deftest cannot-move-tank-thats-not-restarted
+  (testing "a tank that isn't restarted yet, is not allowed to move"
+    (let [now-plus-24-hours-in-millis (+ (System/currentTimeMillis) (* 24 60 60 1000))
+          world {:walls []
+                 :trees []
+                 :tanks [{:id 1 :position [2 2] :restarted now-plus-24-hours-in-millis}]}
+          north (move world 1 "north")]
+      (is (= north world)))))
 
 ;;;;;;;;;;;;;
 ;; BULLETS ;;
