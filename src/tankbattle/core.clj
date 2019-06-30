@@ -124,7 +124,38 @@
     world))
 
 (defn move [world tankid direction]
-  world)
+  (let [tanks-map (map-positions (world :tanks))
+        trees-map (map-positions (world :trees))
+        walls-map (map-positions (world :walls))
+        tank-pos  ((first (filter #(= (% :id) tankid) (world :tanks))) :position)
+        tank      (first (tanks-map tank-pos))
+        restarted (< (tank :restarted) (System/currentTimeMillis))
+        new-pos   (cond
+                    (= direction "north") (north-of tank-pos)
+                    (= direction "east")  (east-of  tank-pos)
+                    (= direction "south") (south-of tank-pos)
+                    (= direction "west")  (west-of  tank-pos))
+        occupied  (-> #{}
+                      (into (keys tanks-map))
+                      (into (keys trees-map))
+                      (into (keys walls-map)))]
+
+    (if (or (contains? occupied new-pos) ;; if the new position is already occupied
+            (not restarted))             ;; .. or the tank is not yet restarted
+
+      ;; return world
+      world
+
+      ;; else:
+      (let [;; update the tank position
+            tank      (assoc tank :position new-pos)
+
+            ;; update the tanks-map
+            new-tanks (assoc tanks-map tank-pos tank)
+
+            ;; add the new tanks into a new world state
+            new-world (assoc world :tanks (into [] (vals new-tanks)))]
+        new-world))))
 
 (defn fire [tank]
   (if-not (tank :moving)
