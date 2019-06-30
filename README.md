@@ -108,7 +108,7 @@ If time permits:
 #### Start game
 
 - [X] lock game for subscription
-- [ ] start game timer
+- [X] start game timer
 
 #### Tank command
 
@@ -131,10 +131,10 @@ If time permits:
         - [ ] if tree has 0 energy left
           - [ ] replace tree for an explosion
 
-    - [ ] in case of :move
-      - [ ] if move-to cell is empty
-        - [ ] move
-        - [ ] update last-move and restarted times
+    - [X] in case of :move
+      - [X] if move-to cell is empty
+        - [X] move
+        - [X] update last-move and restarted times
 
     - [ ] ?remove expired explosions?
     - [ ] calculate winner

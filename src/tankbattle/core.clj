@@ -155,10 +155,13 @@
       world
 
       ;; else:
-      (let [;; update the tank position and orientation
-            tank      (-> tank
-                          (assoc :position    new-pos)
-                          (assoc :orientation (keyword direction)))
+      (let [;; update the tank
+            tank      (let [now (System/currentTimeMillis)]
+                        (-> tank
+                            (assoc :position    new-pos)
+                            (assoc :orientation (keyword direction))
+                            (assoc :last-move   now)
+                            (assoc :restarted   (+ now 2000))))
 
             ;; update the tanks-map
             new-tanks (assoc tanks-map tank-pos tank)
