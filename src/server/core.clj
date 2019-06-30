@@ -46,18 +46,23 @@
                            (let [updated-world (tb/start-game @world)]
                              (reset! world updated-world)))}}}))
 
-(defn move-tank-resource []
+(defn tank-resource-inputs-valid? [world tankid command]
+  (let [tankid-valid?  (tb/valid-tankid?   world tankid)
+        command-valid? (tb/valid-tank-cmd? command)]
+    (and tankid-valid? command-valid?)))
+
+(defn cmd-tank-resource []
   (yada/resource
    {:methods    {:post
-                 {:parameters {:body {:tankid    s/Num
-                                      :direction s/Str}}
+                 {:parameters {:body {:tankid  s/Num
+                                      :command s/Str}}
                   :consumes   "application/json"
                   :response   (fn [ctx]
                                 (let [tankid        (get-in ctx [:parameters :body :tankid])
-                                      direction     (get-in ctx [:parameters :body :direction])
-                                      updated-world (tb/move @world tankid direction)]
-                                  (reset! world updated-world)))}}}))
-
+                                      command       (get-in ctx [:parameters :body :command])]
+                                  (if (tank-resource-inputs-valid? @world tankid command)
+                                    (reset! world (tb/move @world tankid command))
+                                    nil)))}}}))
 
 (defn routes []
   ["/"
@@ -66,7 +71,7 @@
     "subscribe" (subscribe-tank-resource)
     "reset"     (reset-world-resource)
     "start"     (start-game-resource)
-    "tank"      (move-tank-resource)
+    "tank"      (cmd-tank-resource)
     "update"    (update-world-resource)
 
     "die"       (yada/as-resource (fn []
