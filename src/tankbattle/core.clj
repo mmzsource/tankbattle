@@ -369,42 +369,42 @@
         center-r (Math/floor (/ r 2))
         north-south (range (- center-c 1) (+ center-c 3))
         east-west (range (- center-r 1) (+ center-r 3))]
-      (map tree
-        (concat
+    (map tree
+         (concat
           (map
-            (fn [c] [c 3])
-            north-south)
+           (fn [c] [c 3])
+           north-south)
           (map
-            (fn [r] [(- c 4) r])
-            east-west)
+           (fn [r] [(- c 4) r])
+           east-west)
           (map
-            (fn [c] [c (- r 4)])
-            north-south)
+           (fn [c] [c (- r 4)])
+           north-south)
           (map
-            (fn [r] [3 r])
-            east-west)))))
+           (fn [r] [3 r])
+           east-west)))))
 
 (defn initial-av-pos [c r]
   (let [center-c (Math/floor (/ c 2))
         center-r (Math/floor (/ r 2))]
-      [[center-c 1]
-       [(dec c)  center-r]
-       [(dec r)  center-c]
-       [1        center-r]]))
+    [[center-c 1]
+     [(dec c)  center-r]
+     [(dec r)  center-c]
+     [1        center-r]]))
 
 (defn init-world []
-  (let [cols 32 rows 18 moment-created (System/currentTimeMillis)]                                              ; hardcoded!
+  (let [cols 32 rows 18 moment-created (System/currentTimeMillis)] ; hardcoded!
     {:moment-created moment-created
-     :last-update moment-created
-     :dimensions  {:width cols :height rows}
-     :av-ids      #{1 2 3 4}                                          ; hardcoded! assumption: 4 tanks per game
-     :av-pos      (set (shuffle (initial-av-pos cols rows))) ; hardcoded! based on [32 18] grid!
-     :av-cls      (set (shuffle #{:red :green :yellow :blue}))   ; hardcoded! assumption: 4 tanks per game
-     :tanks       []
-     :trees       (initial-trees cols rows)
-     :walls       (create-walls cols rows)
-     :lasers      []
-     :explosions  []}))
+     :last-update    moment-created
+     :dimensions     {:width cols :height rows}
+     :av-ids         #{1 2 3 4}                                    ; hardcoded! assumption: 4 tanks per game
+     :av-pos         (set (shuffle (initial-av-pos cols rows)))    ; hardcoded! based on [32 18] grid!
+     :av-cls         (set (shuffle #{:red :green :yellow :blue}))  ; hardcoded! assumption: 4 tanks per game
+     :tanks          []
+     :trees          (initial-trees cols rows)
+     :walls          (create-walls cols rows)
+     :lasers         []
+     :explosions     []}))
 
 (defn -main
   "It all starts here"
