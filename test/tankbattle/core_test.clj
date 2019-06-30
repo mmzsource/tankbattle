@@ -164,17 +164,25 @@
   (testing "moving tank to an empty position"
     (let [world {:walls   []
                  :trees   []
-                 :tanks   [{:id 1 :position [2 2] :restarted 12345}]
+                 :tanks   [{:id 1 :position [2 2] :restarted 12345 :orientation :foo}]
                  :therest :dontcare}
           north (move world 1 "north")
           east  (move world 1 "east")
           south (move world 1 "south")
-          west  (move world 1 "west")]
+          west  (move world 1 "west")
+          north-tank (first (north :tanks))
+          east-tank  (first (east  :tanks))
+          south-tank (first (south :tanks))
+          west-tank  (first (west  :tanks))]
 
-      (is (= ((first (north :tanks)) :position) [2 1]))
-      (is (= ((first (east  :tanks)) :position) [3 2]))
-      (is (= ((first (south :tanks)) :position  [2 3])))
-      (is (= ((first (west  :tanks)) :position) [1 2])))))
+      (is (= (north-tank :position)    [2 1]))
+      (is (= (north-tank :orientation) :north))
+      (is (= (east-tank  :position)    [3 2]))
+      (is (= (east-tank  :orientation) :east))
+      (is (= (south-tank :position)    [2 3]))
+      (is (= (south-tank :orientation) :south))
+      (is (= (west-tank  :position)    [1 2]))
+      (is (= (east-tank  :orientation) :east)))))
 
 (deftest cannot-move-tank-to-occupied-position
   (testing "you cannot move a tank to an occupied position

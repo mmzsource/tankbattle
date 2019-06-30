@@ -60,7 +60,7 @@
                                 (let [tankid        (get-in ctx [:parameters :body :tankid])
                                       command       (get-in ctx [:parameters :body :command])]
                                   (if (tank-resource-inputs-valid? @world tankid command)
-                                    (reset! world (tb/move @world tankid command))
+                                    (reset! world (tb/update-tank @world tankid command))
                                     nil)))}}}))
 
 (defn routes []

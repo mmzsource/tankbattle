@@ -155,8 +155,10 @@
       world
 
       ;; else:
-      (let [;; update the tank position
-            tank      (assoc tank :position new-pos)
+      (let [;; update the tank position and orientation
+            tank      (-> tank
+                          (assoc :position    new-pos)
+                          (assoc :orientation (keyword direction)))
 
             ;; update the tanks-map
             new-tanks (assoc tanks-map tank-pos tank)
@@ -172,12 +174,9 @@
 
 (defn update-tank [world tankid cmd]
   (cond
-    (= cmd :move-north) (move world tankid :north)
-    (= cmd :move-east)  (move world tankid :east)
-    (= cmd :move-south) (move world tankid :south)
-    (= cmd :move-west)  (move world tankid :west)
-    (= cmd :fire)       (fire world tankid)
-    :else               world))
+    (= cmd (or "north" "east" "south" "west")) (move world tankid cmd)
+    (= cmd "fire")                             (fire world tankid)
+    :else                                      world))
 
 (defn detect-winner [world]
   world)
