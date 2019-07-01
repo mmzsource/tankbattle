@@ -55,6 +55,29 @@
       (is (= (count (position-map [2 2])) 2))
       (is (= (map :direction position-map)) [:east :south]))))
 
+(deftest can-filter-a-set-of-positions-based-on-an-orientation
+  (testing "given an orientation, this function will only return
+            the cells in the direction of the orientation"
+         ;; 4 x 4 grid. [2 2]
+    (let [position-set #{            [2 0]
+                                     [2 1]
+                         [0 2] [1 2] [2 2] [3 2]
+                                     [2 3]      }]
+      (is (= (filter-north-of [2 2] position-set) [[2 0] [2 1]]))
+      (is (= (filter-east-of  [2 2] position-set) [[3 2]]))
+      (is (= (filter-south-of [2 2] position-set) [[2 3]]))
+      (is (= (filter-west-of  [2 2] position-set) [[0 2] [1 2]])))))
+
+(deftest can-find-nearest-neighbour-given-an-orientation
+  (testing "finds the nearest neighbour of a position given an orientation"
+    (let [position-set #{            [2 0]
+                                     [2 1]
+                         [0 2] [1 2] [2 2] [3 2]
+                                     [2 3]      }]
+      (is (= (nearest-pos-given-orient [2 2] position-set :north) [2 1]))
+      (is (= (nearest-pos-given-orient [2 2] position-set :east)  [3 2]))
+      (is (= (nearest-pos-given-orient [2 2] position-set :south) [2 3]))
+      (is (= (nearest-pos-given-orient [2 2] position-set :west)  [1 2])))))
 
 ;;;;;;;;;;;
 ;; WALLS ;;
@@ -153,13 +176,6 @@
           new-world (subscribe-tank old-world "Dr.Strange")]
       (is (= new-world old-world)))))
 
-(deftest tank-only-fires-when-not-moving
-  (testing "tank only fires when it's not moving"
-    (let [stopped-tank {:moving false :firing false}
-          moving-tank  {:moving true  :firing false}]
-      (is (= (fire moving-tank)  {:moving true :firing false}))
-      (is (= (fire stopped-tank) {:moving false :firing true})))))
-
 (deftest move-tank-to-empty-position
   (testing "moving tank to an empty position"
     (let [world {:walls   []
@@ -209,6 +225,135 @@
                  :tanks [{:id 1 :position [2 2] :restarted now-plus-24-hours-in-millis}]}
           north (move world 1 "north")]
       (is (= north world)))))
+
+(deftest test-shooting-a-wall
+  (testing "shooting a wall"
+    (let [world {:tanks  [{:id 1 :position [1 2] :orientation :east
+                           :last-move 12345 :restarted 123456
+                           :last-shot 12345 :reloaded 123456}]
+                 :walls  [{:position [2 2]}]
+                 :trees  []
+                 :lasers []}
+          result (fire world 1)]
+      (is (> ((first (result :tanks)) :last-shot)) ((first (world :tanks)) :last-shot))
+      (is (> ((first (result :tanks)) :reloaded)) ((first (world :tanks)) :reloaded))
+      (is (= (count (result :lasers)) 1))
+      (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update})))))
+
+(deftest test-shooting-a-tree
+  (testing "shooting a tree"
+    (let [world {:tanks      [{:id 1 :position [1 2] :orientation :east
+                               :last-move 12345 :restarted 123456
+                               :last-shot 12345 :reloaded  123456}]
+                 :walls      []
+                 :trees      [{:position [2 2] :energy 3}]
+                 :lasers     []
+                 :explosions []}
+          result (fire world 1)]
+      (is (> ((first (result :tanks)) :last-shot)) ((first (world :tanks)) :last-shot))
+      (is (> ((first (result :tanks)) :reloaded)) ((first (world :tanks)) :reloaded))
+      (is (= ((first (result :trees)) :energy)) 2)
+      (is (= (count (result :explosions)) 0))
+      (is (= (count (result :lasers)) 1))
+      (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions})))))
+
+(deftest test-exploding-a-tree
+  (testing "exploding a tree"
+    (let [world {:tanks      [{:id 1 :position [1 2] :orientation :east
+                               :last-move 12345 :restarted 123456
+                               :last-shot 12345 :reloaded  123456}]
+                 :walls      []
+                 :trees      [{:position [2 2] :energy 1}]
+                 :lasers     []
+                 :explosions []}
+          result (fire world 1)]
+      (is (> ((first (result :tanks)) :last-shot)) ((first (world :tanks)) :last-shot))
+      (is (> ((first (result :tanks)) :reloaded)) ((first (world :tanks)) :reloaded))
+      (is (= (count (result :trees)) 0))
+      (is (= (count (result :explosions)) 1))
+      (is (= (count (result :lasers)) 1))
+      (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions})))))
+
+(deftest shooting-a-tank
+  (testing "shooting a tank"
+    (let [world {:tanks      [{:id 1 :position [1 2] :orientation :east
+                               :last-move 12345 :restarted 123456
+                               :last-shot 12345 :reloaded  123455
+                               :hits [] :kills []}
+                              {:id 2 :position [2 2] :energy 10}]
+                 :walls      []
+                 :trees      []
+                 :lasers     []
+                 :explosions []}
+          result (fire world 1)
+          source (first (result :tanks))
+          target (last  (result :tanks))]
+      (is (> (source :last-shot)) ((first (world :tanks)) :last-shot))
+      (is (> (source :reloaded))  ((first (world :tanks)) :reloaded))
+      (is (= (source :hits) [2])) ;; hit tank with :id *2*
+      (is (= (source :kills) []))
+      (is (= (target :energy) 9))
+      (is (= (count (result :explosions)) 0))
+      (is (= (count (result :lasers)) 1))
+      (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions})))))
+
+(deftest exploding-a-tank
+  (testing "exploding a tank"
+    (let [world {:tanks      [{:id 1 :position [1 2] :orientation :east
+                               :last-move 12345 :restarted 123456
+                               :last-shot 12345 :reloaded  123455
+                               :hits [] :kills []}
+                              {:id 2 :position [2 2] :energy 1}]
+                 :walls      []
+                 :trees      []
+                 :lasers     []
+                 :explosions []}
+          result (fire world 1)
+          source (first (result :tanks))]
+      (is (> (source :last-shot)) ((first (world :tanks)) :last-shot))
+      (is (> (source :reloaded))  ((first (world :tanks)) :reloaded))
+      (is (= (source :hits) [2]))  ;; hit tank with :id *2*
+      (is (= (source :kills) [2])) ;; killed tank with :id *2*
+      (is (= (source :id) 1))      ;; did we remove the correct tank?
+      (is (= (count (result :tanks)) 1))
+      (is (= (count (result :explosions)) 1))
+      (is (= (count (result :lasers)) 1))
+      (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions})))))
+
+(defn update-tanks [world tank]
+  (let [tanks         (world :tanks)
+        updated-tanks (conj tanks tank)]
+    (assoc world :tanks updated-tanks)))
+
+(deftest find-the-right-object-to-shoot
+  (testing "should shoot the first object in the direction its oriented to"
+    (let [world {:tanks       [{:id 20 :position [2 0] :energy 20}
+                               {:id 32 :position [3 2] :energy 32}
+                               {:id 23 :position [2 3] :energy 23}
+                               {:id 2  :position [0 2] :energy 2}]
+                 :trees       [{:position [2 1] :energy 21}
+                               {:position [4 2] :energy 42}]
+                 :walls       [{:position [2 4]}
+                               {:position [1 2]}]
+                 :lasers      []
+                 :explosition []}
+          north-oriented {:id 1 :position [2 2] :orientation :north
+                          :last-move 12345 :restarted 123456
+                          :last-shot 12345 :reloaded  123456
+                          :hits [] :kills []}
+          east-oriented  (assoc north-oriented :orientation :east)
+          south-oriented (assoc north-oriented :orientation :south)
+          west-oriented  (assoc north-oriented :orientation :west)
+          north          (fire (update-tanks world north-oriented) 1)
+          east           (fire (update-tanks world east-oriented) 1)
+          south          (fire (update-tanks world south-oriented) 1)
+          west           (fire (update-tanks world west-oriented) 1)]
+      (is (= ((first (north :trees))  :energy)) 20)    ;; hit!
+      (is (= ((find-tank north 20)    :energy)) 20)    ;; untouched
+      (is (= ((find-tank east  32)    :energy)) 31)    ;; hit!
+      (is (= ((second (east  :trees)) :energy)) 42)    ;; untouched
+      (is (= ((find-tank south 23)    :energy)) 22)    ;; hit!
+      (is (= ((find-tank west  2)     :energy))  1)))) ;; hit!
 
 ;;;;;;;;;;;;;
 ;; BULLETS ;;

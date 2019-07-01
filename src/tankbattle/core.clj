@@ -38,6 +38,16 @@
    {}
    gameobjects))
 
+(defn unmap-positions
+  "undo the map-positions operation
+   returns a vector of gameobjects"
+  [positions-map]
+  (reduce
+   (fn [acc [_ [obj]]]
+     (conj acc obj))
+   []
+   positions-map))
+
 (defn dead-object-positions [object-position-map]
   (into #{} (keys (filter (fn [[pos [obj]]] (< (obj :energy) 1)) object-position-map))))
 
@@ -50,6 +60,53 @@
    []
    object-position-map))
 
+(defn filter-north-of [[source-col source-row] position-set]
+  (filter
+   (fn [[target-col target-row]]
+     (and (= source-col target-col)
+          (< target-row source-row)))
+   position-set))
+
+(defn filter-east-of [[source-col source-row] position-set]
+  (filter
+   (fn [[target-col target-row]]
+     (and (= source-row target-row)
+          (> target-col source-col)))
+   position-set))
+
+(defn filter-south-of [[source-col source-row] position-set]
+  (filter
+   (fn [[target-col target-row]]
+     (and (= source-col target-col)
+          (> target-row source-row)))
+   position-set))
+
+(defn filter-west-of [[source-col source-row] position-set]
+  (filter
+   (fn [[target-col target-row]]
+     (and (= source-row target-row)
+          (< target-col source-col)))
+   position-set))
+
+(defn nearest-north-pos [positions]
+  (first (sort-by second > positions)))
+
+(defn nearest-east-pos [positions]
+  (first (sort-by first < positions)))
+
+(defn nearest-south-pos [positions]
+  (first (sort-by second < positions)))
+
+(defn nearest-west-pos [positions]
+  (first (sort-by first > positions)))
+
+(defn nearest-pos-given-orient
+  [position position-set orientation]
+  (cond
+    (= orientation :north) (nearest-north-pos (filter-north-of position position-set))
+    (= orientation :east)  (nearest-east-pos  (filter-east-of  position position-set))
+    (= orientation :south) (nearest-south-pos (filter-south-of position position-set))
+    (= orientation :west)  (nearest-west-pos  (filter-west-of  position position-set))))
 
 ;;;;;;;;;;;;
 ;; BORDER ;;
@@ -135,8 +192,8 @@
   (let [tanks-map (map-positions (world :tanks))
         trees-map (map-positions (world :trees))
         walls-map (map-positions (world :walls))
-        tank-pos  ((first (filter #(= (% :id) tankid) (world :tanks))) :position)
-        tank      (first (tanks-map tank-pos))
+        tank      (find-tank world tankid)
+        tank-pos  (tank :position)
         restarted (< (tank :restarted) (System/currentTimeMillis))
         new-pos   (cond
                     (= direction "north") (north-of tank-pos)
@@ -164,16 +221,140 @@
                             (assoc :restarted   (+ now 2000))))
 
             ;; update the tanks-map
-            new-tanks (assoc tanks-map tank-pos tank)
+            new-tanks (assoc tanks-map tank-pos [tank])
 
             ;; add the new tanks into a new world state
-            new-world (assoc world :tanks (into [] (vals new-tanks)))]
+            new-world (assoc world :tanks (unmap-positions new-tanks))]
         new-world))))
 
-(defn fire [tank]
-  (if-not (tank :moving)
-    (merge tank {:firing true})
-    tank))
+(defn fire [world tankid]
+  (let [now         (System/currentTimeMillis)
+        tanks-map   (map-positions (world :tanks))
+        trees-map   (map-positions (world :trees))
+        walls-map   (map-positions (world :walls))
+        tank        (find-tank world tankid)
+        tank-pos    (tank :position)
+        orientation (tank :orientation)
+        reloaded    (< (tank :reloaded) now)
+        safe        (< (+ (tank :last-move) 2000) now)]
+
+    (if (and reloaded safe)
+      (let [nrst-tree (nearest-pos-given-orient tank-pos (into #{} (keys trees-map)) orientation)
+            nrst-tank (nearest-pos-given-orient tank-pos (into #{} (keys tanks-map)) orientation)
+            nrst-wall (nearest-pos-given-orient tank-pos (into #{} (keys walls-map)) orientation)
+            nrst-pos  (nearest-pos-given-orient tank-pos (into #{} [nrst-tree nrst-tank nrst-wall]) orientation)
+            object-to-hit  (cond
+                             (= nrst-pos nrst-tree) :tree
+                             (= nrst-pos nrst-tank) :tank
+                             :else                  :wall)
+            updated-lasers (conj
+                            (world :lasers)
+                            {:start-position tank-pos
+                             :end-position   nrst-pos
+                             :direction      orientation
+                             :start-time     now
+                             :end-time       (+ now 500)})]
+
+        (cond
+          (= object-to-hit :tank)
+          ;; handle-tank-hit
+          (let [;; hit-tank administration
+                hit-tank         (first (tanks-map nrst-tank))
+                hit-tankid       (hit-tank :id)
+                hit-tank-pos     nrst-tank
+                hit-tank-energy  (dec (hit-tank :energy))
+                updated-hit-tank (assoc hit-tank :energy hit-tank-energy)
+                destroyed?       (< hit-tank-energy 1)
+
+                ;; source-tank administration
+                src-tank-hits   (conj (tank :hits) hit-tankid)
+                src-tank-kills  (if destroyed?
+                                  (conj (tank :kills) hit-tankid)
+                                  (tank :kills))
+                updated-src-tank (-> tank
+                                     (assoc :hits      src-tank-hits)
+                                     (assoc :kills     src-tank-kills)
+                                     (assoc :last-shot now)
+                                     (assoc :reloaded  (+ now 5000)))
+
+                ;; tank-map administration
+                updated-tank-map (if destroyed?
+                                   (-> tanks-map
+                                       (dissoc hit-tank-pos)
+                                       (assoc  tank-pos [updated-src-tank]))
+                                   (-> tanks-map
+                                       (assoc hit-tank-pos [updated-hit-tank])
+                                       (assoc tank-pos     [updated-src-tank])))
+                updated-tanks      (unmap-positions updated-tank-map)
+
+                ;; explosion administration
+                updated-explosions (if destroyed?
+                                     (conj
+                                      (world :explosions)
+                                      {:position   hit-tank-pos
+                                       :start-time now
+                                       :end-time   (+ now 2000)})
+                                     (world :explosions))]
+
+            (-> world
+                (assoc :tanks       updated-tanks)
+                (assoc :explosions  updated-explosions)
+                (assoc :lasers      updated-lasers)
+                (assoc :last-update now)))
+
+          (= object-to-hit :tree)
+          ;; handle-tree-hit
+          (let [;; tree administration
+                tree         (first (trees-map nrst-tree))
+                tree-pos     nrst-tree
+                tree-energy  (dec (tree :energy))
+                updated-tree (assoc tree :energy tree-energy)
+                destroyed?   (< tree-energy 1)
+
+                ;; tank administration
+                updated-tank (-> tank
+                                 (assoc :last-shot now)
+                                 (assoc :reloaded  (+ now 5000)))
+
+                ;; tank-map administration
+                updated-tank-map (assoc tanks-map tank-pos [updated-tank])
+                updated-tanks    (unmap-positions updated-tank-map)
+
+                ;; tree-map administration
+                updated-tree-map (if destroyed?
+                                   (dissoc trees-map tree-pos)
+                                   (assoc  trees-map tree-pos [updated-tree]))
+                updated-trees    (unmap-positions updated-tree-map)
+
+                ;; explosion administration
+                updated-explosions (if destroyed?
+                                     (conj
+                                      (world :explosions)
+                                      {:position   tree-pos
+                                       :start-time now
+                                       :end-time   (+ now 2000)})
+                                     (world :explosions))]
+
+            (-> world
+                (assoc :tanks       updated-tanks)
+                (assoc :trees       updated-trees)
+                (assoc :explosions  updated-explosions)
+                (assoc :lasers      updated-lasers)
+                (assoc :last-update now)))
+
+          (= object-to-hit :wall)
+          ;; handle-wall-hit
+          (let [updated-tank     (-> tank
+                                     (assoc :last-shot now)
+                                     (assoc :reloaded  (+ now 5000)))
+                updated-tank-map (assoc tanks-map tank-pos [updated-tank])
+                updated-tanks    (unmap-positions updated-tank-map)]
+
+            (-> world
+                (assoc :tanks       updated-tanks)
+                (assoc :lasers      updated-lasers)
+                (assoc :last-update now)))
+          :else world)))))
 
 (defn update-tank [world tankid cmd]
   (cond
@@ -298,24 +479,6 @@
   [world]
   (> (count (world :tanks)) 0))
 
-(comment
-
-; not yet needed
-
-  (defn running? [world]
-    (let [currentTimeMillis (System/currentTimeMillis)]
-      (and (started? world)
-           (> currentTimeMillis (world :game-start))
-           (< currentTimeMillis (world :game-end)))))
-
-; not yet needed
-
-  (defn ended? [world]
-    (and (started? world)
-         (> (System/currentTimeMillis) (world :game-end))))
-
-)
-
 (defn start-game [world]
   (if (and (not (started? world))
            (players-subscribed? world))
@@ -334,61 +497,23 @@
        (update-explosions)
        (detect-winner)))
 
-;; Hardcoded! Based on [32 18] grid!
-(def trees [{:position [15  3] :energy 3}
-            {:position [18  3] :energy 3}
-            {:position [15  4] :energy 3}
-            {:position [16  4] :energy 3}
-            {:position [17  4] :energy 3}
-            {:position [18  4] :energy 3}
-
-            {:position [ 3  7] :energy 3}
-            {:position [ 4  7] :energy 3}
-            {:position [ 4  8] :energy 3}
-            {:position [ 4  9] :energy 3}
-            {:position [ 3 10] :energy 3}
-            {:position [ 4 10] :energy 3}
-
-            {:position [27  7] :energy 3}
-            {:position [28  7] :energy 3}
-            {:position [27  8] :energy 3}
-            {:position [27  9] :energy 3}
-            {:position [27 10] :energy 3}
-            {:position [28 10] :energy 3}
-
-            {:position [15 13] :energy 3}
-            {:position [16 13] :energy 3}
-            {:position [17 13] :energy 3}
-            {:position [18 13] :energy 3}
-            {:position [15 14] :energy 3}
-            {:position [18 14] :energy 3}])
-
 (defn tree [pos]
   {:position pos :energy 3})
 
 (defn initial-trees [c r]
-  (let [center-c (Math/floor (/ c 2))
-        center-r (Math/floor (/ r 2))
-        north-south (range (- center-c 1) (+ center-c 3))
-        east-west (range (- center-r 1) (+ center-r 3))]
-    (map tree
-         (concat
-          (map
-           (fn [c] [c 3])
-           north-south)
-          (map
-           (fn [r] [(- c 4) r])
-           east-west)
-          (map
-           (fn [c] [c (- r 4)])
-           north-south)
-          (map
-           (fn [r] [3 r])
-           east-west)))))
+  (let [center-c (int (/ c 2))
+        center-r (int (/ r 2))
+        north-south (range (dec center-c) (+ center-c 3))
+        east-west   (range (dec center-r) (+ center-r 3))
+        ns3         (map (fn [c] [c 3])       north-south)
+        ns4         (map (fn [c] [c (- r 4)]) north-south)
+        ew3         (map (fn [r] [3 r])       east-west)
+        ew4         (map (fn [r] [(- c 4) r]) east-west)]
+    (mapv tree (concat ns3 ns4 ew3 ew4))))
 
 (defn initial-av-pos [c r]
-  (let [center-c (Math/floor (/ c 2))
-        center-r (Math/floor (/ r 2))]
+  (let [center-c (int (/ c 2))
+        center-r (int (/ r 2))]
     [[center-c 1]
      [(dec c)  center-r]
      [(dec r)  center-c]
@@ -412,9 +537,3 @@
   "It all starts here"
   [& args]
   (init-world))
-
-(comment
-;; Sequence is in line with the order in which the events came in (fair play)
-(def tank-cmd-seq [[1 :turn-east] [1 :stop] [1 :fire] [2 :drive]] )
-
-)

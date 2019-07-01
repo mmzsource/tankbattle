@@ -13,9 +13,9 @@
 
 (defn world-resource []
   (yada/resource
-   {:methods        {:get  {:produces #{"application/json" "application/edn"}
-                            :response (fn [ctx] (assoc @world
-                                                   :time (System/currentTimeMillis)))}}}))
+   {:methods {:get
+              {:produces #{"application/json" "application/edn"}
+               :response (fn [ctx] (assoc @world :time (System/currentTimeMillis)))}}}))
 
 (defn update-world-resource []
   (yada/resource
@@ -53,16 +53,16 @@
 
 (defn cmd-tank-resource []
   (yada/resource
-   {:methods    {:post
-                 {:parameters {:body {:tankid  s/Num
-                                      :command s/Str}}
-                  :consumes   "application/json"
-                  :response   (fn [ctx]
-                                (let [tankid        (get-in ctx [:parameters :body :tankid])
-                                      command       (get-in ctx [:parameters :body :command])]
-                                  (if (tank-resource-inputs-valid? @world tankid command)
-                                    (reset! world (tb/update-tank @world tankid command))
-                                    nil)))}}}))
+   {:methods {:post
+              {:parameters {:body {:tankid  s/Num
+                                   :command s/Str}}
+               :consumes   "application/json"
+               :response   (fn [ctx]
+                             (let [tankid        (get-in ctx [:parameters :body :tankid])
+                                   command       (get-in ctx [:parameters :body :command])]
+                               (if (tank-resource-inputs-valid? @world tankid command)
+                                 (reset! world (tb/update-tank @world tankid command))
+                                 (-> ctx :response (assoc :status 400)))))}}}))
 
 (defn routes []
   ["/"

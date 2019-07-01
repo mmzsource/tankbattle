@@ -59,22 +59,15 @@ clojure, etc.
 
 ### Plan
 
-Create REST endpoints end-to-end in this order:
-
-- [X] POST create-world (includes working with atom in yada and finding proper time
-  library)
-- [X] GET world
-- [X] POST create tank subscription
-- [ ] POST create start game
-- [ ] POST create tank command endpoint
-
-Then in the domain model:
-
-- [ ] fill in update-world 'details'
+- [ ] cleanup expired explosions & lasers
+- [ ] calculate winner
+- [ ] stop when timer is finished
+- [ ] cleanup strange floating point positions
+- [ ] Manually Test (otherwise rely on the automated tests)
 
 If time permits:
 
-- [ ] Manually Test (otherwise rely on the automated tests)
+- [ ] Cleanup (e.g. old bullet-stuff) and Refactor (structure of position-map ! , fire method, etc)
 - [ ] Test client (so you can see the requests and responses in the developer
       console?)
 - [ ] Store all game events (so you can replay the complete game): game was
@@ -85,59 +78,3 @@ If time permits:
 - [ ] DOS detection (and prevention?)
 - [ ] gists with already prepared tanks in several different languages
 
-### Tank battle design and pseudocode
-
-#### Reset game
-
-- [X] create new world atom
-  - [X] create a wall around the world
-  - [X] put some trees and walls inside it
-  - [X] create list of player colors to pick from
-
-#### Tank subscription
-
-- [X] create tank
-  - [X] randomly create id
-  - [X] associate provided name with tank (or pick from default list if none is
-    provided (default list is populated with 'anonymous' to begin with))
-  - [X] pick color randomly from list of still available colors and dissoc that
-    color from the list
-  - [X] update last-move, restarted, last-shot, reloaded
-  - [X] when color list is empty, lock game for subscription
-
-#### Start game
-
-- [X] lock game for subscription
-- [X] start game timer
-
-#### Tank command
-
-- [ ] if end time is not reached yet:
-  - [ ] execute POSTed commands in order
-    - [ ] :fire can only be executed 5 seconds after last shot && 2 seconds
-      after last move
-    - [ ] :move can only be executed 2 seconds after last :move
-
-    - [ ] In case of :fire
-      - [ ] scan the row or column the tank is oriented in to see if something is hit
-      - [ ] If other tank is hit:
-        - [ ] update other tank (decrement energy)
-        - [ ] update firing tank (increment hits)
-        - [ ] if tank has 0 energy left
-          - [ ] replace other tank for an explosion
-          - [ ] update firing tank (increment kills)
-      - [ ] If tree is hit:
-        - [ ] update tree (decrement energy)
-        - [ ] if tree has 0 energy left
-          - [ ] replace tree for an explosion
-
-    - [X] in case of :move
-      - [X] if move-to cell is empty
-        - [X] move
-        - [X] update last-move and restarted times
-
-    - [ ] ?remove expired explosions?
-    - [ ] calculate winner
-
-- [ ] otherwise
-  - [ ] calculate winner
