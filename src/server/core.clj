@@ -15,7 +15,9 @@
   (yada/resource
    {:methods {:get
               {:produces #{"application/json" "application/edn"}
-               :response (fn [ctx] (assoc @world :time (System/currentTimeMillis)))}}}))
+               :response (fn [ctx]
+                           (let [clean-world (reset! world (tb/cleanup @world))]
+                             (assoc clean-world :time (System/currentTimeMillis))))}}}))
 
 (defn update-world-resource []
   (yada/resource
