@@ -513,8 +513,8 @@
 (defn initial-trees [c r]
   (let [center-c (int (/ c 2))
         center-r (int (/ r 2))
-        north-south (range (dec center-c) (+ center-c 3))
-        east-west   (range (dec center-r) (+ center-r 3))
+        north-south (range (- center-c 2) (+ center-c 2))
+        east-west   (range (- center-r 2) (+ center-r 2))
         ns3         (map (fn [c] [c 3])       north-south)
         ns4         (map (fn [c] [c (- r 4)]) north-south)
         ew3         (map (fn [r] [3 r])       east-west)
