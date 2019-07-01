@@ -41,7 +41,7 @@
   [gameobjects]
   (reduce
    (fn [position-map {:keys [position] :as gameobject}]
-     (update-in position-map [position] (fnil conj []) gameobject))
+     (update position-map position (fnil conj []) gameobject))
    {}
    gameobjects))
 
@@ -173,6 +173,8 @@
    :hits        []
    :kills       []})
 
+
+
 (defn subscribe-tank
   [world tank-name]
   ;; only subscribe when there is still room left for tanks
@@ -300,7 +302,7 @@
                                       (world :explosions)
                                       {:position   hit-tank-pos
                                        :start-time now
-                                       :end-time   (+ now 2000)})
+                                       :end-time   (+ now 4000)})
                                      (world :explosions))]
 
             (-> world
@@ -339,7 +341,7 @@
                                       (world :explosions)
                                       {:position   tree-pos
                                        :start-time now
-                                       :end-time   (+ now 2000)})
+                                       :end-time   (+ now 4000)})
                                      (world :explosions))]
 
             (-> world
@@ -361,13 +363,14 @@
                 (assoc :tanks       updated-tanks)
                 (assoc :lasers      updated-lasers)
                 (assoc :last-update now)))
-          :else world)))))
+          :else world))
+      world)))
 
 (defn update-tank [world tankid cmd]
   (cond
-    (= (contains? #{"north" "east" "south" "west"} cmd)) (move world tankid cmd)
-    (= cmd "fire")                                       (fire world tankid)
-    :else                                                world))
+    (contains? #{"north" "east" "south" "west"} cmd) (move world tankid cmd)
+    (= cmd "fire")                                   (fire world tankid)
+    :else                                            world))
 
 (defn detect-winner [world]
   world)
@@ -527,12 +530,12 @@
      [1        center-r]]))
 
 (defn init-world []
-  (let [cols 32 rows 18 moment-created (System/currentTimeMillis)] ; hardcoded!
+  (let [cols 12 rows 12 moment-created (System/currentTimeMillis)] ; hardcoded!
     {:moment-created moment-created
      :last-update    moment-created
      :dimensions     {:width cols :height rows}
      :av-ids         #{1 2 3 4}                                    ; hardcoded! assumption: 4 tanks per game
-     :av-pos         (set (shuffle (initial-av-pos cols rows)))    ; hardcoded! based on [32 18] grid!
+     :av-pos         (set (shuffle (initial-av-pos cols rows)))
      :av-cls         (set (shuffle #{:red :green :yellow :blue}))  ; hardcoded! assumption: 4 tanks per game
      :tanks          []
      :trees          (initial-trees cols rows)

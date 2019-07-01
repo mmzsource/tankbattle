@@ -77,4 +77,3 @@ If time permits:
   comprehensive documentation')
 - [ ] DOS detection (and prevention?)
 - [ ] gists with already prepared tanks in several different languages
-
