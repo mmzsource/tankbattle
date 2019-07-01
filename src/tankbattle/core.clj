@@ -262,7 +262,7 @@
                              :end-position   nrst-pos
                              :direction      orientation
                              :start-time     now
-                             :end-time       (+ now 500)})]
+                             :end-time       (+ now 2000)})]
 
         (cond
           (= object-to-hit :tank)
@@ -284,7 +284,9 @@
                                      (assoc :hits      src-tank-hits)
                                      (assoc :kills     src-tank-kills)
                                      (assoc :last-shot now)
-                                     (assoc :reloaded  (+ now 5000)))
+                                     (assoc :reloaded  (+ now 5000))
+                                     (assoc :last-move now)
+                                     (assoc :restarted (+ now 2000)))
 
                 ;; tank-map administration
                 updated-tank-map (if destroyed?
@@ -323,7 +325,9 @@
                 ;; tank administration
                 updated-tank (-> tank
                                  (assoc :last-shot now)
-                                 (assoc :reloaded  (+ now 5000)))
+                                 (assoc :reloaded  (+ now 5000))
+                                 (assoc :last-move now)
+                                 (assoc :restarted (+ now 2000)))
 
                 ;; tank-map administration
                 updated-tank-map (assoc tanks-map tank-pos [updated-tank])
@@ -355,7 +359,9 @@
           ;; handle-wall-hit
           (let [updated-tank     (-> tank
                                      (assoc :last-shot now)
-                                     (assoc :reloaded  (+ now 5000)))
+                                     (assoc :reloaded  (+ now 5000))
+                                     (assoc :last-move now)
+                                     (assoc :restarted (+ now 2000)))
                 updated-tank-map (assoc tanks-map tank-pos [updated-tank])
                 updated-tanks    (unmap-positions updated-tank-map)]
 
