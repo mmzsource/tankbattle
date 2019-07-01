@@ -153,6 +153,16 @@
   (let [tanks (world :tanks)]
     (first (filter #(= (% :id) tankid) tanks))))
 
+(defn tank-index [world tankid]
+  (first
+    (map
+      (fn [[i _]] i)
+      (filter
+        (fn [[i the-one?]] the-one?)
+        (map-indexed
+          (fn [i tank] [i (= tankid (tank :id))])
+          (world :tanks))))))
+
 (defn valid-tankid? [world tankid]
   (not (nil? (find-tank world tankid))))
 
@@ -235,6 +245,10 @@
             ;; add the new tanks into a new world state
             new-world (assoc world :tanks (unmap-positions new-tanks))]
         new-world))))
+
+(defn turn [world tankid]
+  (let [tank (find-tank world tankid)]
+    ))
 
 (defn fire [world tankid]
   (let [now         (System/currentTimeMillis)
