@@ -512,20 +512,18 @@
        (update-explosions)
        (detect-winner)))
 
-(defn filter-on-time [game-object-position-map now]
-  (filter (fn [pos [obj]] (< now (obj :end-time))) game-object-position-map))
+(defn filter-on-time [gameobjects now]
+  (into [] (filter (fn [obj] (< now (obj :end-time))) gameobjects)))
 
 (defn cleanup [world]
   (let [explosions   (world :explosions)
-        expl-pos-map (map-positions explosions)
         lasers       (world :lasers)
-        lsrs-pos-map (map-positions lasers)
         now          (System/currentTimeMillis)
-        updated-em   (filter-on-time expl-pos-map now)
-        updated-lm   (filter-on-time lsrs-pos-map now)]
+        updated-e    (filter-on-time explosions now)
+        updated-l    (filter-on-time lasers now)]
     (-> world
-        (assoc :explosions  (unmap-positions updated-em))
-        (assoc :lasers      (unmap-positions updated-lm))
+        (assoc :explosions  updated-e)
+        (assoc :lasers      updated-l)
         (assoc :last-update now))))
 
 (defn tree [pos]
