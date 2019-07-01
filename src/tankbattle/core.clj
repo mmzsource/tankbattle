@@ -27,6 +27,13 @@
 (defn east-of  [[x y]] [(inc x) y])
 (defn west-of  [[x y]] [(dec x) y])
 
+(defn neighbour [position orientation]
+  (cond
+    (= orientation :north) (north-of position)
+    (= orientation :east)  (east-of  position)
+    (= orientation :south) (south-of position)
+    (= orientation :west)  (west-of  position)))
+
 (defn map-positions
   "All gameobjects (maps) have a :position key. Given a collection of
   gameobjects, returns a map from position [col row] to a collection of
@@ -249,7 +256,7 @@
                              :else                  :wall)
             updated-lasers (conj
                             (world :lasers)
-                            {:start-position tank-pos
+                            {:start-position (neighbour tank-pos orientation)
                              :end-position   nrst-pos
                              :direction      orientation
                              :start-time     now
@@ -358,9 +365,9 @@
 
 (defn update-tank [world tankid cmd]
   (cond
-    (= cmd (or "north" "east" "south" "west")) (move world tankid cmd)
-    (= cmd "fire")                             (fire world tankid)
-    :else                                      world))
+    (= (contains? #{"north" "east" "south" "west"} cmd)) (move world tankid cmd)
+    (= cmd "fire")                                       (fire world tankid)
+    :else                                                world))
 
 (defn detect-winner [world]
   world)
@@ -515,8 +522,8 @@
   (let [center-c (int (/ c 2))
         center-r (int (/ r 2))]
     [[center-c 1]
-     [(dec c)  center-r]
-     [(dec r)  center-c]
+     [(- c 2)  center-r]
+     [center-c (- r 2) ]
      [1        center-r]]))
 
 (defn init-world []
