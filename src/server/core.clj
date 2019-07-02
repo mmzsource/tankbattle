@@ -2,7 +2,8 @@
   (:require
     [yada.yada :as yada]
     [schema.core :as s]
-    [tankbattle.core :as tb]))
+    [tankbattle.core :as tb])
+  (:gen-class))
 
 ; simple atom for exposing a global function so the server can close itself
 (def server (atom nil))
@@ -17,7 +18,10 @@
               {:produces #{"application/json" "application/edn"}
                :response (fn [ctx]
                            (let [clean-world (reset! world (tb/cleanup @world))]
-                             (assoc clean-world :time (System/currentTimeMillis))))}}}))
+                             (assoc
+                               (assoc clean-world :time (System/currentTimeMillis))
+                               :headers
+                               {"Access-Control-Allow-Origin" "*"})))}}}))
 
 (defn update-world-resource []
   (yada/resource
@@ -28,8 +32,14 @@
 (defn reset-world-resource []
   (yada/resource
    {:methods {:post
-              {:response (fn [ctx]
-                           (reset! world new-world))}}}))
+              {:parameters {:body {:secret s/Str}}
+               :consumes   "application/json"
+                :response (fn [ctx]
+                           (if (= "do not cheat!" (get-in ctx [:parameters :body :secret]))
+                            (reset! world new-world)))}}}))
+
+(defn free-spot? [world]
+  (> (count (world :av-ids)) 0))
 
 (defn subscribe-tank-resource []
   (yada/resource
@@ -37,9 +47,15 @@
               {:parameters {:body {:name s/Str}}
                :consumes   "application/json"
                :response   (fn [ctx]
-                             (let [name          (get-in ctx [:parameters :body :name])
-                                   updated-world (tb/subscribe-tank @world name)]
-                               (reset! world updated-world)))}}}))
+                             (if (free-spot? @world)
+                               (let [name          (get-in ctx [:parameters :body :name])
+                                   [updated-world tankid] (tb/subscribe-tank @world name)]
+                               (reset! world updated-world)
+                               tankid)
+                               (->
+                                 ctx
+                                 :response
+                                 (assoc :status 403))))}}}))
 
 (defn start-game-resource []
   (yada/resource
@@ -63,8 +79,13 @@
                              (let [tankid        (get-in ctx [:parameters :body :tankid])
                                    command       (get-in ctx [:parameters :body :command])]
                                (if (tank-resource-inputs-valid? @world tankid command)
-                                 (reset! world (tb/update-tank @world tankid command))
-                                 (-> ctx :response (assoc :status 400)))))}}}))
+                                 (let [[new-world changed?] (tb/update-tank @world tankid command)]
+                                   (reset! world new-world)
+                                   changed?)
+                                 (->
+                                   ctx
+                                   :response
+                                   (assoc :status 400)))))}}}))
 
 (defn routes []
   ["/"
@@ -74,11 +95,7 @@
     "reset"     (reset-world-resource)
     "start"     (start-game-resource)
     "tank"      (cmd-tank-resource)
-    "update"    (update-world-resource)
-
-    "die"       (yada/as-resource (fn []
-                                    (future (Thread/sleep 100) (@server))
-                                    "shutting down in 100ms..."))}])
+    "update"    (update-world-resource)}])
 
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})
