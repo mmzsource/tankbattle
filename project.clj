@@ -9,4 +9,5 @@
   :main server.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  :plugins  [[venantius/yagni     "0.1.7"]])
+  :plugins  [[venantius/yagni "0.1.7"]
+             [lein-kibit      "0.1.6"]])

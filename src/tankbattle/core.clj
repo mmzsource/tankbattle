@@ -108,17 +108,17 @@
 ;;;;;;;;;;;;
 
 
-(defn north-wall-positions [cols rows]
-  (into #{} (for [x (range cols)] [x 0])))
+(defn north-wall-positions [cols _]
+  (set (for [x (range cols)] [x 0])))
 
 (defn east-wall-positions [cols rows]
-  (into #{} (for [y (range rows)] [(dec cols) y])))
+  (set (for [y (range rows)] [(dec cols) y])))
 
 (defn south-wall-positions [cols rows]
-  (into #{} (for [x (range cols)] [x (dec rows)])))
+  (set (for [x (range cols)] [x (dec rows)])))
 
-(defn west-wall-positions [cols rows]
-  (into #{} (for [y (range rows)] [0 y])))
+(defn west-wall-positions [_ rows]
+  (set (for [y (range rows)] [0 y])))
 
 (defn wall-positions [cols rows]
   (s/union
@@ -152,7 +152,7 @@
    :name        name
    :position    position
    :orientation (first (shuffle orientations))
-   :energy      10
+   :energy      3
    :color       color
    :last-shot   1234567890
    :reloaded    1234572890
@@ -167,13 +167,13 @@
   (if (< (count (world :tanks)) 4)
     (let [available-ids       (world :av-ids)
           id                  (first available-ids)
-          remaining-ids       (into #{} (rest available-ids))
+          remaining-ids       (set (rest available-ids))
           available-pos       (world :av-pos)
           position            (first available-pos)
-          remaining-pos       (into #{} (rest available-pos))
+          remaining-pos       (set (rest available-pos))
           available-colors    (world :av-cls)
           color               (first available-colors)
-          remaining-colors    (into #{} (rest available-colors))
+          remaining-colors    (set (rest available-colors))
           new-tank            (create-tank id position color tank-name)]
       (-> world
           (assoc     :last-update (System/currentTimeMillis))
@@ -234,10 +234,10 @@
         safe        (< (+ (tank :last-move) 2000) now)]
 
     (if (and reloaded safe)
-      (let [nrst-tree (nearest-pos-given-orient tank-pos (into #{} (keys trees-map)) orientation)
-            nrst-tank (nearest-pos-given-orient tank-pos (into #{} (keys tanks-map)) orientation)
-            nrst-wall (nearest-pos-given-orient tank-pos (into #{} (keys walls-map)) orientation)
-            nrst-pos  (nearest-pos-given-orient tank-pos (into #{} [nrst-tree nrst-tank nrst-wall]) orientation)
+      (let [nrst-tree (nearest-pos-given-orient tank-pos (set (keys trees-map)) orientation)
+            nrst-tank (nearest-pos-given-orient tank-pos (set (keys tanks-map)) orientation)
+            nrst-wall (nearest-pos-given-orient tank-pos (set (keys walls-map)) orientation)
+            nrst-pos  (nearest-pos-given-orient tank-pos (set [nrst-tree nrst-tank nrst-wall]) orientation)
             object-to-hit  (cond
                              (= nrst-pos nrst-tree) :tree
                              (= nrst-pos nrst-tank) :tank
@@ -376,7 +376,7 @@
 (defn players-subscribed?
   "more than zero players subscribed?"
   [world]
-  (> (count (world :tanks)) 0))
+  (pos? (count (world :tanks))))
 
 (defn start-game [world]
   (if (and (not (started? world))
@@ -390,7 +390,7 @@
     world))
 
 (defn filter-on-time [gameobjects now]
-  (into [] (filter (fn [obj] (< now (obj :end-time))) gameobjects)))
+  (filterv (fn [obj] (< now (obj :end-time))) gameobjects))
 
 (defn cleanup [world]
   (let [explosions   (world :explosions)

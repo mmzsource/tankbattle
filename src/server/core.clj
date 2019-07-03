@@ -16,7 +16,7 @@
   (yada/resource
    {:methods {:get
               {:produces #{"application/json" "application/edn"}
-               :response (fn [ctx]
+               :response (fn [_]
                            (let [clean-world (reset! world (tb/cleanup @world))]
                              (assoc
                                (assoc clean-world :time (System/currentTimeMillis))
@@ -26,7 +26,7 @@
 (defn update-world-resource []
   (yada/resource
    {:methods {:post
-              {:response (fn [ctx]
+              {:response (fn [_]
                            (swap! world assoc :last-update (System/currentTimeMillis)))}}}))
 
 (defn reset-world-resource []
@@ -39,7 +39,7 @@
                             (reset! world new-world)))}}}))
 
 (defn free-spot? [world]
-  (> (count (world :av-ids)) 0))
+  (pos? (count (world :av-ids))))
 
 (defn subscribe-tank-resource []
   (yada/resource
@@ -59,7 +59,7 @@
 (defn start-game-resource []
   (yada/resource
    {:methods {:post
-              {:response (fn [ctx]
+              {:response (fn [_]
                            (let [updated-world (tb/start-game @world)]
                              (reset! world updated-world)))}}}))
 
