@@ -222,6 +222,12 @@
             new-world (assoc world :tanks (unmap-positions new-tanks))]
         new-world))))
 
+(defn- explosion
+  [position time]
+  {:position   position
+   :start-time time
+   :end-time   (+ time 4000)})
+
 (defn fire [world tankid]
   (let [now         (System/currentTimeMillis)
         tanks-map   (map-positions (world :tanks))
@@ -288,9 +294,7 @@
                 updated-explosions (if destroyed?
                                      (conj
                                       (world :explosions)
-                                      {:position   hit-tank-pos
-                                       :start-time now
-                                       :end-time   (+ now 4000)})
+                                      (explosion hit-tank-pos now))
                                      (world :explosions))]
 
             (-> world
@@ -329,9 +333,7 @@
                 updated-explosions (if destroyed?
                                      (conj
                                       (world :explosions)
-                                      {:position   tree-pos
-                                       :start-time now
-                                       :end-time   (+ now 4000)})
+                                      (explosion tree-pos now))
                                      (world :explosions))]
 
             (-> world

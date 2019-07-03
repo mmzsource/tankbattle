@@ -15,13 +15,15 @@
 (defn world-resource []
   (yada/resource
    {:methods {:get
-              {:produces #{"application/json" "application/edn"}
-               :response (fn [_]
-                           (let [clean-world (reset! world (tb/cleanup @world))]
-                             (assoc
-                               (assoc clean-world :time (System/currentTimeMillis))
-                               :headers
-                               {"Access-Control-Allow-Origin" "*"})))}}}))
+              {:produces       #{"application/json" "application/edn"}
+               :response       (fn [_]
+                                 (let [clean-world (reset! world (tb/cleanup @world))]
+                                   (assoc clean-world :time (System/currentTimeMillis))))}}
+    :access-control {:allow-origin "*"
+                     :allow-credentials false
+                     :expose-headers #{"X-Custom"}
+                     :allow-methods #{:get}
+                     :allow-headers ["Api-Key"]}}))
 
 (defn update-world-resource []
   (yada/resource
