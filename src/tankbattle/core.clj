@@ -55,18 +55,6 @@
    []
    positions-map))
 
-(defn dead-object-positions [object-position-map]
-  (into #{} (keys (filter (fn [[pos [obj]]] (< (obj :energy) 1)) object-position-map))))
-
-(defn remove-objects [object-position-map positions-of-objects-to-remove]
-  (reduce
-   (fn [acc [pos [& objects]]]
-     (if (not (contains? positions-of-objects-to-remove pos))
-       (into acc objects)
-       acc))
-   []
-   object-position-map))
-
 (defn filter-north-of [[source-col source-row] position-set]
   (filter
    (fn [[target-col target-row]]
@@ -153,16 +141,6 @@
   (let [tanks (world :tanks)]
     (first (filter #(= (% :id) tankid) tanks))))
 
-(defn tank-index [world tankid]
-  (first
-    (map
-      (fn [[i _]] i)
-      (filter
-        (fn [[i the-one?]] the-one?)
-        (map-indexed
-          (fn [i tank] [i (= tankid (tank :id))])
-          (world :tanks))))))
-
 (defn valid-tankid? [world tankid]
   (not (nil? (find-tank world tankid))))
 
@@ -182,8 +160,6 @@
    :restarted   1234569891
    :hits        []
    :kills       []})
-
-
 
 (defn subscribe-tank
   [world tank-name]
@@ -245,10 +221,6 @@
             ;; add the new tanks into a new world state
             new-world (assoc world :tanks (unmap-positions new-tanks))]
         new-world))))
-
-(defn turn [world tankid]
-  (let [tank (find-tank world tankid)]
-    ))
 
 (defn fire [world tankid]
   (let [now         (System/currentTimeMillis)
@@ -392,113 +364,11 @@
     (= cmd "fire")                                   (fire world tankid)
     :else                                            world))
 
-(defn detect-winner [world]
-  world)
-
-
-;;;;;;;;;;;;;
-;; BULLETS ;;
-;;;;;;;;;;;;;
-
-
-(defn move-bullet [{:keys [position direction] :as bullet}]
-  (cond
-    (= direction :north) (merge bullet {:position (north-of position)})
-    (= direction :east)  (merge bullet {:position (east-of  position)})
-    (= direction :south) (merge bullet {:position (south-of position)})
-    (= direction :west)  (merge bullet {:position (west-of  position)})
-    :else bullet))
-
-(defn update-energy-when-hit [gameobject nr-of-hits]
-  (reduce
-   (fn [acc _] (update-in acc [:energy] dec))
-   gameobject
-   (range nr-of-hits)))
-
-(defn update-hit-objects [object-position-map bullet-position-map]
-  (reduce
-   (fn [acc [pos [obj]]]
-     (conj
-      acc
-      (update-energy-when-hit obj (count (bullet-position-map pos)))))
-   []
-   object-position-map))
-
-(defn update-bullet-positions [{:keys [bullets] :as world}]
-  (assoc world :bullets (mapv move-bullet bullets)))
-
-(defn update-object-hits [{:keys [bullets tanks trees walls] :as world}]
-  (let [bullets-map      (map-positions bullets)
-        bullet-positions (into #{} (keys bullets-map))
-
-        tanks-map        (map-positions tanks)
-        tank-positions   (into #{} (keys tanks-map))
-        tank-hits        (s/intersection bullet-positions tank-positions)
-
-        trees-map        (map-positions trees)
-        trees-positions  (into #{} (keys trees-map))
-        trees-hits       (s/intersection bullet-positions trees-positions)
-
-        walls-map        (map-positions walls)
-        walls-positions  (into #{} (keys walls-map))
-        walls-hits       (s/intersection bullet-positions walls-positions)
-
-        ;; Decrease energy of hit tanks
-        updated-tanks (update-hit-objects tanks-map bullets-map)
-
-        ;; Decrease energy of hit trees
-        updated-trees (update-hit-objects trees-map bullets-map)
-
-        ;; Remove bullets used on tanks, trees and walls
-        used-bullet-positions (s/union tank-hits trees-hits walls-hits)
-        updated-bullets       (remove-objects bullets-map used-bullet-positions)]
-
-    ;; now update the world with the newly calculated values
-    (-> world
-        (assoc :tanks   updated-tanks)
-        (assoc :trees   updated-trees)
-        (assoc :bullets updated-bullets))))
-
-
-;;;;;;;;;;;;;;;;
-;; EXPLOSIONS ;;
-;;;;;;;;;;;;;;;;
-
-
-(defn update-explosion-energy [explosion-position-map]
-  (into {} (map (fn [[pos [obj]]] {pos [(update-in obj [:energy] dec)]}) explosion-position-map)))
-
-(defn cleanup-explosions [explosion-position-map]
-  (filter (fn [[pos [obj]]] (> (obj :energy) 0)) explosion-position-map))
-
-(defn create-new-explosions [explosion-positions]
-  (mapv (fn [pos] {:position pos :energy 7}) explosion-positions))
-
-(defn update-explosions [{:keys [tanks trees explosions] :as world}]
-  (let [tank-map             (map-positions tanks)
-        dead-tank-positions  (dead-object-positions tank-map)
-        updated-tanks        (remove-objects tank-map dead-tank-positions)
-
-        tree-map             (map-positions trees)
-        dead-tree-positions  (dead-object-positions tree-map)
-        updated-trees        (remove-objects tree-map dead-tree-positions)
-
-        explosion-map        (map-positions explosions)
-        decreased-explosions (update-explosion-energy explosion-map)
-        dead-explosion-pos   (dead-object-positions decreased-explosions)
-        cleanedup-explosions (remove-objects decreased-explosions dead-explosion-pos)
-        new-explosion-pos    (s/union dead-tank-positions dead-tree-positions)
-        updated-explosions   (into cleanedup-explosions (create-new-explosions new-explosion-pos))]
-
-    (-> world
-        (assoc :tanks      updated-tanks)
-        (assoc :trees      updated-trees)
-        (assoc :explosions updated-explosions))))
-
 
 ;;;;;;;;;;;
 ;; WORLD ;;
 ;;;;;;;;;;;
+
 
 (defn started? [world]
   (contains? world :game-end))
@@ -519,13 +389,6 @@
           (assoc :game-end     (+ currentTimeMillis (* gameDurationInMinutes 60 1000)))))
     world))
 
-(defn update-world [tank-events {:keys [tanks bullets trees walls] :as world}]
-  (->> world
-       (update-bullet-positions)
-       (update-object-hits)
-       (update-explosions)
-       (detect-winner)))
-
 (defn filter-on-time [gameobjects now]
   (into [] (filter (fn [obj] (< now (obj :end-time))) gameobjects)))
 
@@ -541,7 +404,7 @@
         (assoc :last-update now))))
 
 (defn tree [pos]
-  {:position pos :energy 3})
+  {:position pos :energy 1})
 
 (defn initial-trees [c r]
   (let [center-c (int (/ c 2))
@@ -575,8 +438,3 @@
      :walls          (create-walls cols rows)
      :lasers         []
      :explosions     []}))
-
-(defn -main
-  "It all starts here"
-  [& args]
-  (init-world))

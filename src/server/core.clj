@@ -48,14 +48,13 @@
                :consumes   "application/json"
                :response   (fn [ctx]
                              (if (free-spot? @world)
-                               (let [name          (get-in ctx [:parameters :body :name])
-                                   [updated-world tankid] (tb/subscribe-tank @world name)]
-                               (reset! world updated-world)
-                               tankid)
+                               (let [name         (get-in ctx [:parameters :body :name])
+                                    updated-world (tb/subscribe-tank @world name)]
+                                 (reset! world updated-world))
                                (->
-                                 ctx
-                                 :response
-                                 (assoc :status 403))))}}}))
+                                ctx
+                                :response
+                                (assoc :status 403))))}}}))
 
 (defn start-game-resource []
   (yada/resource
@@ -79,9 +78,8 @@
                              (let [tankid        (get-in ctx [:parameters :body :tankid])
                                    command       (get-in ctx [:parameters :body :command])]
                                (if (tank-resource-inputs-valid? @world tankid command)
-                                 (let [[new-world changed?] (tb/update-tank @world tankid command)]
-                                   (reset! world new-world)
-                                   changed?)
+                                 (let [new-world (tb/update-tank @world tankid command)]
+                                   (reset! world new-world))
                                  (->
                                    ctx
                                    :response
