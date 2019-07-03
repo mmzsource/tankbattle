@@ -8,4 +8,5 @@
                  [org.slf4j/slf4j-nop "1.7.25"]]
   :main server.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}}
+  :plugins  [[venantius/yagni     "0.1.7"]])
