@@ -62,12 +62,10 @@ clojure, etc.
 - [ ] cleanup expired explosions & lasers
 - [ ] calculate winner
 - [ ] stop when timer is finished
-- [ ] cleanup strange floating point positions
 - [ ] Manually Test (otherwise rely on the automated tests)
 
 If time permits:
 
-- [ ] Cleanup (e.g. old bullet-stuff) and Refactor (structure of position-map ! , fire method, etc)
 - [ ] Test client (so you can see the requests and responses in the developer
       console?)
 - [ ] Store all game events (so you can replay the complete game): game was
@@ -77,3 +75,38 @@ If time permits:
   comprehensive documentation')
 - [ ] DOS detection (and prevention?)
 - [ ] gists with already prepared tanks in several different languages
+
+### Some Ideas
+
+- [ ] Hexagonal Design. Core contains mapping from positions to gameobjects.
+      Boundary converts between normal world representation & position mapping.
+- [ ] Return standard data object from core. Something like {:response ...
+      :error-message ...} and then make conversion to the outside world as thin
+      as possible; basically only move data from Response object to external
+      representation (like REST server or cmd client, or ...)
+- [ ] Some resources (mostly found in the talk pointed to in the first link)
+      - Effect ive Clojure about data oriented Clojure -
+        https://www.youtube.com/watch?v=IZlt6hH8YiA
+      - https://blog.jessitron.com/2015/06/06/ultratestable-coding-style/
+      - Mike Acton "Data-Oriented Design and C++" -
+        https://www.youtube.com/watch?v=rX0ItVEVjHc
+      - http://number-none.com/blow/blog/programming/2014/09/26/carmack-on-inlined-code.html
+      - https://www.destroyallsoftware.com/talks/boundaries
+      - https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell
+      - Core.Async in Use - Timothy Baldridge -
+        https://www.youtube.com/watch?v=096pIlA3GDo
+      - Transparency through data by James Reeves -
+        https://www.youtube.com/watch?v=zznwKCifC1A
+      - ClojureScript Concurrency Revisited – Paulus Esterhazy -
+        https://www.youtube.com/watch?v=rV1gTJ2wsZg
+      - Zach Tellman - ABC - Always Be Composing -
+        https://www.youtube.com/watch?v=3oQTSP4FngY
+
+And then of course:
+
+      - Solving problems the Clojure way -
+        https://www.youtube.com/watch?v=vK1DazRK_a0
+      - The only abstractions that really matter are those that give exponential
+        benefits by changing the game. The danger of small-ball abstractions is
+        they obscure the big picture of what your program is doing and prevent
+        the big wins. - @kovasb
