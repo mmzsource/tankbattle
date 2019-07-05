@@ -1,5 +1,6 @@
 (ns tankbattle.core
-  (:require [clojure.set :as s]))
+  (:require [clojure.set :as s]
+            [tankbattle.position :as pos]))
 
 ;; Validation of ids, commands, moves, directions etc will be done once on the
 ;; server boundary (as opposed to validating the values in each and every
@@ -7,101 +8,6 @@
 
 
 (def orientations #{:north :east :south :west})
-
-
-;;;;;;;;;;;;;;;
-;; POSITIONS ;;
-;;;;;;;;;;;;;;;
-
-
-(defn generate-random-position
-  "generates one random position on the board within given bounds"
-  ([cols rows]
-   (generate-random-position 0 cols 0 rows))
-  ([mincol maxcol minrow maxrow]
-   [(rand-nth (range mincol (inc maxcol)))
-    (rand-nth (range minrow (inc maxrow)))]))
-
-(defn north-of [[x y]] [x (dec y)])
-(defn south-of [[x y]] [x (inc y)])
-(defn east-of  [[x y]] [(inc x) y])
-(defn west-of  [[x y]] [(dec x) y])
-
-(defn neighbour [position orientation]
-  (cond
-    (= orientation :north) (north-of position)
-    (= orientation :east)  (east-of  position)
-    (= orientation :south) (south-of position)
-    (= orientation :west)  (west-of  position)))
-
-(defn map-positions
-  "All gameobjects (maps) have a :position key. Given a collection of
-  gameobjects, returns a map from position [col row] to a collection of
-  gameobjects on that position"
-  [gameobjects]
-  (reduce
-   (fn [position-map {:keys [position] :as gameobject}]
-     (update position-map position (fnil conj []) gameobject))
-   {}
-   gameobjects))
-
-(defn unmap-positions
-  "undo the map-positions operation
-   returns a vector of gameobjects"
-  [positions-map]
-  (reduce
-   (fn [acc [_ [obj]]]
-     (conj acc obj))
-   []
-   positions-map))
-
-(defn filter-north-of [[source-col source-row] position-set]
-  (filter
-   (fn [[target-col target-row]]
-     (and (= source-col target-col)
-          (< target-row source-row)))
-   position-set))
-
-(defn filter-east-of [[source-col source-row] position-set]
-  (filter
-   (fn [[target-col target-row]]
-     (and (= source-row target-row)
-          (> target-col source-col)))
-   position-set))
-
-(defn filter-south-of [[source-col source-row] position-set]
-  (filter
-   (fn [[target-col target-row]]
-     (and (= source-col target-col)
-          (> target-row source-row)))
-   position-set))
-
-(defn filter-west-of [[source-col source-row] position-set]
-  (filter
-   (fn [[target-col target-row]]
-     (and (= source-row target-row)
-          (< target-col source-col)))
-   position-set))
-
-(defn nearest-north-pos [positions]
-  (first (sort-by second > positions)))
-
-(defn nearest-east-pos [positions]
-  (first (sort-by first < positions)))
-
-(defn nearest-south-pos [positions]
-  (first (sort-by second < positions)))
-
-(defn nearest-west-pos [positions]
-  (first (sort-by first > positions)))
-
-(defn nearest-pos-given-orient
-  [position position-set orientation]
-  (cond
-    (= orientation :north) (nearest-north-pos (filter-north-of position position-set))
-    (= orientation :east)  (nearest-east-pos  (filter-east-of  position position-set))
-    (= orientation :south) (nearest-south-pos (filter-south-of position position-set))
-    (= orientation :west)  (nearest-west-pos  (filter-west-of  position position-set))))
 
 ;;;;;;;;;;;;
 ;; BORDER ;;
@@ -184,17 +90,17 @@
     world))
 
 (defn move [world tankid direction]
-  (let [tanks-map (map-positions (world :tanks))
-        trees-map (map-positions (world :trees))
-        walls-map (map-positions (world :walls))
+  (let [tanks-map (pos/map-positions (world :tanks))
+        trees-map (pos/map-positions (world :trees))
+        walls-map (pos/map-positions (world :walls))
         tank      (find-tank world tankid)
         tank-pos  (tank :position)
         restarted (< (tank :restarted) (System/currentTimeMillis))
         new-pos   (cond
-                    (= direction "north") (north-of tank-pos)
-                    (= direction "east")  (east-of  tank-pos)
-                    (= direction "south") (south-of tank-pos)
-                    (= direction "west")  (west-of  tank-pos))
+                    (= direction "north") (pos/north-of tank-pos)
+                    (= direction "east")  (pos/east-of  tank-pos)
+                    (= direction "south") (pos/south-of tank-pos)
+                    (= direction "west")  (pos/west-of  tank-pos))
         occupied  (-> #{}
                       (into (keys tanks-map))
                       (into (keys trees-map))
@@ -219,7 +125,7 @@
             new-tanks (assoc tanks-map tank-pos [tank])
 
             ;; add the new tanks into a new world state
-            new-world (assoc world :tanks (unmap-positions new-tanks))]
+            new-world (assoc world :tanks (pos/unmap-positions new-tanks))]
         new-world))))
 
 (defn- explosion
@@ -230,9 +136,9 @@
 
 (defn fire [world tankid]
   (let [now         (System/currentTimeMillis)
-        tanks-map   (map-positions (world :tanks))
-        trees-map   (map-positions (world :trees))
-        walls-map   (map-positions (world :walls))
+        tanks-map   (pos/map-positions (world :tanks))
+        trees-map   (pos/map-positions (world :trees))
+        walls-map   (pos/map-positions (world :walls))
         tank        (find-tank world tankid)
         tank-pos    (tank :position)
         orientation (tank :orientation)
@@ -240,17 +146,17 @@
         safe        (< (+ (tank :last-move) 2000) now)]
 
     (if (and reloaded safe)
-      (let [nrst-tree (nearest-pos-given-orient tank-pos (set (keys trees-map)) orientation)
-            nrst-tank (nearest-pos-given-orient tank-pos (set (keys tanks-map)) orientation)
-            nrst-wall (nearest-pos-given-orient tank-pos (set (keys walls-map)) orientation)
-            nrst-pos  (nearest-pos-given-orient tank-pos (set [nrst-tree nrst-tank nrst-wall]) orientation)
+      (let [nrst-tree (pos/nearest-pos-given-orient tank-pos (set (keys trees-map)) orientation)
+            nrst-tank (pos/nearest-pos-given-orient tank-pos (set (keys tanks-map)) orientation)
+            nrst-wall (pos/nearest-pos-given-orient tank-pos (set (keys walls-map)) orientation)
+            nrst-pos  (pos/nearest-pos-given-orient tank-pos (set [nrst-tree nrst-tank nrst-wall]) orientation)
             object-to-hit  (cond
                              (= nrst-pos nrst-tree) :tree
                              (= nrst-pos nrst-tank) :tank
                              :else                  :wall)
             updated-lasers (conj
                             (world :lasers)
-                            {:start-position (neighbour tank-pos orientation)
+                            {:start-position (pos/neighbour tank-pos orientation)
                              :end-position   nrst-pos
                              :direction      orientation
                              :start-time     now
@@ -288,7 +194,7 @@
                                    (-> tanks-map
                                        (assoc hit-tank-pos [updated-hit-tank])
                                        (assoc tank-pos     [updated-src-tank])))
-                updated-tanks      (unmap-positions updated-tank-map)
+                updated-tanks      (pos/unmap-positions updated-tank-map)
 
                 ;; explosion administration
                 updated-explosions (if destroyed?
@@ -321,13 +227,13 @@
 
                 ;; tank-map administration
                 updated-tank-map (assoc tanks-map tank-pos [updated-tank])
-                updated-tanks    (unmap-positions updated-tank-map)
+                updated-tanks    (pos/unmap-positions updated-tank-map)
 
                 ;; tree-map administration
                 updated-tree-map (if destroyed?
                                    (dissoc trees-map tree-pos)
                                    (assoc  trees-map tree-pos [updated-tree]))
-                updated-trees    (unmap-positions updated-tree-map)
+                updated-trees    (pos/unmap-positions updated-tree-map)
 
                 ;; explosion administration
                 updated-explosions (if destroyed?
@@ -351,7 +257,7 @@
                                      (assoc :last-move now)
                                      (assoc :restarted (+ now 2000)))
                 updated-tank-map (assoc tanks-map tank-pos [updated-tank])
-                updated-tanks    (unmap-positions updated-tank-map)]
+                updated-tanks    (pos/unmap-positions updated-tank-map)]
 
             (-> world
                 (assoc :tanks       updated-tanks)

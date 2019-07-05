@@ -85,28 +85,26 @@ If time permits:
       as possible; basically only move data from Response object to external
       representation (like REST server or cmd client, or ...)
 - [ ] Some resources (mostly found in the talk pointed to in the first link)
-      - Effect ive Clojure about data oriented Clojure -
-        https://www.youtube.com/watch?v=IZlt6hH8YiA
-      - https://blog.jessitron.com/2015/06/06/ultratestable-coding-style/
-      - Mike Acton "Data-Oriented Design and C++" -
-        https://www.youtube.com/watch?v=rX0ItVEVjHc
-      - http://number-none.com/blow/blog/programming/2014/09/26/carmack-on-inlined-code.html
-      - https://www.destroyallsoftware.com/talks/boundaries
-      - https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell
-      - Core.Async in Use - Timothy Baldridge -
-        https://www.youtube.com/watch?v=096pIlA3GDo
-      - Transparency through data by James Reeves -
-        https://www.youtube.com/watch?v=zznwKCifC1A
-      - ClojureScript Concurrency Revisited – Paulus Esterhazy -
-        https://www.youtube.com/watch?v=rV1gTJ2wsZg
-      - Zach Tellman - ABC - Always Be Composing -
-        https://www.youtube.com/watch?v=3oQTSP4FngY
+- Effect ive Clojure about data oriented Clojure -
+  https://www.youtube.com/watch?v=IZlt6hH8YiA
+- UltraTestable Coding Style -
+  https://blog.jessitron.com/2015/06/06/ultratestable-coding-style/
+- Mike Acton "Data-Oriented Design and C++" -
+  https://www.youtube.com/watch?v=rX0ItVEVjHc
+- Carmack on inlined code -
+  http://number-none.com/blow/blog/programming/2014/09/26/carmack-on-inlined-code.html
+- Boundaries - https://www.destroyallsoftware.com/talks/boundaries
+- Functional Core, Imperative Shell
+  https://www.destroyallsoftware.com/screencasts/catalog/functional-core-imperative-shell
+- Core.Async in Use - Timothy Baldridge - https://www.youtube.com/watch?v=096pIlA3GDo
+- Transparency through data by James Reeves - https://www.youtube.com/watch?v=zznwKCifC1A
+- ClojureScript Concurrency Revisited – Paulus Esterhazy - https://www.youtube.com/watch?v=rV1gTJ2wsZg
+- Zach Tellman - ABC - Always Be Composing - https://www.youtube.com/watch?v=3oQTSP4FngY
 
 And then of course:
 
-      - Solving problems the Clojure way -
-        https://www.youtube.com/watch?v=vK1DazRK_a0
-      - The only abstractions that really matter are those that give exponential
-        benefits by changing the game. The danger of small-ball abstractions is
-        they obscure the big picture of what your program is doing and prevent
-        the big wins. - @kovasb
+- Solving problems the Clojure way - https://www.youtube.com/watch?v=vK1DazRK_a0
+- The only abstractions that really matter are those that give exponential
+  benefits by changing the game. The danger of small-ball abstractions is they
+  obscure the big picture of what your program is doing and prevent the big
+  wins. - @kovasb

@@ -10,4 +10,5 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
   :plugins  [[venantius/yagni "0.1.7"]
-             [lein-kibit      "0.1.6"]])
+             [lein-kibit      "0.1.6"]
+             [lein-cloverage  "1.1.1"]])
