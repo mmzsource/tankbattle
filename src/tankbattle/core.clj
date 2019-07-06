@@ -1,6 +1,6 @@
 (ns tankbattle.core
-  (:require [clojure.set :as s]
-            [tankbattle.position :as pos]))
+  (:require [tankbattle.position :as pos]
+            [tankbattle.walls    :as wall]))
 
 ;; Validation of ids, commands, moves, directions etc will be done once on the
 ;; server boundary (as opposed to validating the values in each and every
@@ -8,35 +8,6 @@
 
 
 (def orientations #{:north :east :south :west})
-
-;;;;;;;;;;;;
-;; BORDER ;;
-;;;;;;;;;;;;
-
-
-(defn north-wall-positions [cols _]
-  (set (for [x (range cols)] [x 0])))
-
-(defn east-wall-positions [cols rows]
-  (set (for [y (range rows)] [(dec cols) y])))
-
-(defn south-wall-positions [cols rows]
-  (set (for [x (range cols)] [x (dec rows)])))
-
-(defn west-wall-positions [_ rows]
-  (set (for [y (range rows)] [0 y])))
-
-(defn wall-positions [cols rows]
-  (s/union
-   (north-wall-positions cols rows)
-   (east-wall-positions  cols rows)
-   (south-wall-positions cols rows)
-   (west-wall-positions  cols rows)))
-
-(defn create-walls [cols rows]
-  (let [wps (wall-positions cols rows)]
-    (mapv (fn [wall-position] {:position wall-position}) wps)))
-
 
 ;;;;;;;;;;;
 ;; TANKS ;;
@@ -334,15 +305,15 @@
      [1        center-r]]))
 
 (defn init-world []
-  (let [cols 12 rows 12 moment-created (System/currentTimeMillis)] ; hardcoded!
+  (let [cols 12 rows 12 moment-created (System/currentTimeMillis)]
     {:moment-created moment-created
      :last-update    moment-created
      :dimensions     {:width cols :height rows}
-     :av-ids         #{1 2 3 4}                                    ; hardcoded! assumption: 4 tanks per game
-     :av-pos         (set (shuffle (initial-av-pos cols rows)))
-     :av-cls         (set (shuffle #{:red :green :yellow :blue}))  ; hardcoded! assumption: 4 tanks per game
+     :av-ids         #{1 2 3 4}                                    ; 4 tanks per game
+     :av-pos         (set (shuffle (initial-av-pos cols rows)))    ; 4 tanks per game
+     :av-cls         (set (shuffle #{:red :green :yellow :blue}))  ; 4 tanks per game
      :tanks          []
      :trees          (initial-trees cols rows)
-     :walls          (create-walls cols rows)
+     :walls          (wall/create-walls cols rows)
      :lasers         []
      :explosions     []}))
