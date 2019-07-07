@@ -2,22 +2,22 @@
   (:require
     [yada.yada :as yada]
     [schema.core :as s]
-    [tankbattle.core :as tb])
-  (:gen-class))
+    [tankbattle.core :as core]
+    [tankbattle.tank :as tank]))
 
 ; simple atom for exposing a global function so the server can close itself
 (def server (atom nil))
 
-(def new-world (tb/init-world))
+(def new-world (core/init-world))
 
-(def world (atom (tb/init-world)))
+(def world (atom (core/init-world)))
 
 (defn world-resource []
   (yada/resource
    {:methods {:get
               {:produces       #{"application/json" "application/edn"}
                :response       (fn [_]
-                                 (let [clean-world (reset! world (tb/cleanup @world))]
+                                 (let [clean-world (reset! world (core/cleanup @world))]
                                    (assoc clean-world :time (System/currentTimeMillis))))}}
     :access-control {:allow-origin "*"
                      :allow-credentials false
@@ -51,23 +51,20 @@
                :response   (fn [ctx]
                              (if (free-spot? @world)
                                (let [name         (get-in ctx [:parameters :body :name])
-                                    updated-world (tb/subscribe-tank @world name)]
+                                     updated-world (tank/subscribe-tank @world name)]
                                  (reset! world updated-world))
-                               (->
-                                ctx
-                                :response
-                                (assoc :status 403))))}}}))
+                               (-> ctx :response (assoc :status 403))))}}}))
 
 (defn start-game-resource []
   (yada/resource
    {:methods {:post
               {:response (fn [_]
-                           (let [updated-world (tb/start-game @world)]
+                           (let [updated-world (core/start-game @world)]
                              (reset! world updated-world)))}}}))
 
 (defn tank-resource-inputs-valid? [world tankid command]
-  (let [tankid-valid?  (tb/valid-tankid?   world tankid)
-        command-valid? (tb/valid-tank-cmd? command)]
+  (let [tankid-valid?  (tank/valid-tankid?   world tankid)
+        command-valid? (tank/valid-tank-cmd? command)]
     (and tankid-valid? command-valid?)))
 
 (defn cmd-tank-resource []
@@ -80,7 +77,7 @@
                              (let [tankid        (get-in ctx [:parameters :body :tankid])
                                    command       (get-in ctx [:parameters :body :command])]
                                (if (tank-resource-inputs-valid? @world tankid command)
-                                 (let [new-world (tb/update-tank @world tankid command)]
+                                 (let [new-world (tank/update-tank @world tankid command)]
                                    (reset! world new-world))
                                  (->
                                    ctx
