@@ -1,5 +1,6 @@
 (ns tankbattle.core
-  (:require [tankbattle.walls    :as wall]))
+  (:require [tankbattle.walls    :as wall]
+            [clojure.string :as str]))
 
 ;; Validation of ids, commands, moves, directions etc will be done once on the
 ;; server boundary (as opposed to validating the values in each and every
@@ -78,3 +79,65 @@
      :walls          (wall/create-walls cols rows)
      :lasers         []
      :explosions     []}))
+
+(def valid-chars #{\w \t \1 \2 \3 \4 \.})
+
+(defn empty-world? [split-world]
+  (when (empty? (flatten split-world))
+    "An empty world is not allowed."))
+
+(defn rows-size? [split-world]
+  (when (< (count split-world) 3)
+    "Number of rows should be at least 3."))
+
+(defn cols-size? [split-world]
+  (when (< (count (first split-world)) 3)
+    "Number of columns should be at least 3."))
+
+(defn cols-count? [split-world]
+  (let [cols (count (first split-world))]
+    (when (not (every? #(= (count %) cols) split-world))
+      "Each row should have an equal amount of cols.")))
+
+(defn known-chars? [split-world]
+  (when (not (every? #(contains? valid-chars %) (flatten split-world)))
+    (format "Only valid characters are: wall: w , tree: t , tank: 1 2 3 or 4 , empty: . , newline to denote new row")))
+
+(defn tanks? [split-world]
+  (when (not (some #(= % \1) (flatten split-world)))
+    "Should contain at least 1 tank and that one should have id 1."))
+
+(defn north-walls? [split-world]
+  (when (not (every? #(= \w %) (first split-world)))
+    "First row should only contain walls"))
+
+(defn south-walls? [split-world]
+  (when (not (every? #(= \w %) (last split-world)))
+    "Last row should only contain walls"))
+
+(defn west-walls? [split-world]
+  (let [first-col (map first split-world)]
+    (when (not (every? #(= \w %) first-col))
+      "First col should only contain walls")))
+
+(defn east-walls? [split-world]
+  (let [last-col (map last split-world)]
+    (when (not (every? #(= \w %) last-col))
+      "Last col should only contain walls")))
+
+(def world-structure-rules
+  [empty-world? rows-size? cols-size? cols-count? known-chars? tanks?
+   north-walls? south-walls? west-walls? east-walls?])
+
+(defn validate-world [world]
+  (let [split-world (mapv vec (str/split-lines world))]
+    (->> world-structure-rules
+         (map #(% split-world))
+         (remove nil?)
+         sequence)))
+
+(defn validate [world-to-validate]
+  (let [validation-errors (validate-world world-to-validate)]
+    (if (empty? validation-errors)
+      (str "World is valid: \n" world-to-validate )
+      (reduce (fn [acc val] (str acc "\n" val)) "World is invalid: " validation-errors))))

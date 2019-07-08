@@ -84,6 +84,16 @@
                                    :response
                                    (assoc :status 400)))))}}}))
 
+(defn validate-world-resource []
+  (yada/resource
+   {:methods {:post
+              {:parameters {:body {:world s/Str}}
+               :consumes   "application/json"
+               :produces   #{"application/json" "application/edn"}
+               :response   (fn [ctx]
+                             (let [world-to-validate (get-in ctx [:parameters :body :world])]
+                               (core/validate world-to-validate)))}}}))
+
 (defn routes []
   ["/"
    {
@@ -92,7 +102,8 @@
     "reset"     (reset-world-resource)
     "start"     (start-game-resource)
     "tank"      (cmd-tank-resource)
-    "update"    (update-world-resource)}])
+    "update"    (update-world-resource)
+    "validate"  (validate-world-resource)}])
 
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})
@@ -104,7 +115,7 @@
 
 (defn -main [& args]
   (let [done (run)]
-    (println "server running on port 3000... GET \"http://localhost/die\" to kill")
+    (println "server running on port 3000... GET \"http://localhost:3000/die\" to kill")
     @done))
 
 

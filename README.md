@@ -55,6 +55,9 @@ curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/js
 curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "west"}'
 curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "fire"}'
 curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -d '{"secret": "do not cheat!"}'
+curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": "www\nw1w\nwww\n"}'
+curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": "wwwwwwwwwwww\nw....11....w\nw..........w\nw...tttt...w\nw..t....t..w\nw3.t....t.4w\nw3.t....t.4w\nw..t....t..w\nw...tttt...w\nw..........w\nw....22....w\nwwwwwwwwwwww\n"}'
+
 ```
 
 ## Credits
@@ -66,21 +69,42 @@ curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/js
 - Jeroen van Wijgerden, who build a (privately hosted) tankbattle renderer and
   helped during design and development of the tankbattle server.
 
-## TODO
+## Some Ideas
 
-### Plan
+### Features
 
+Design your own world:
+
+- [X] endpoint to validate board-design (and explain what's wrong with it)
+- [ ] convert board-design to a game-world via the reset endpoint. Fallback: default world
+- [ ] currently validating string with \n ... could that be different? (file?
+      vec-of-vec?)
+
+Furthermore:
+
+- [ ] Laser mirrors
+- [ ] Teleportation tiles
+
+### Improving user experience
+
+- [ ] Serve intro doc as html
 - [ ] Test client (so you can see the requests and responses in the developer
       console?)
-- [ ] Store all game events (so you can replay the complete game): game was
-  reset, tank subscribed, game started, tank command executed, winner detected
+- [ ] gists with already prepared tanks in several different languages
 - [ ] Swagger docs. (Or describe in the docs that the REST API isn't described
   properly, because Dutch army management 'wants working tanks, instead of
   comprehensive documentation')
-- [ ] DOS detection (and prevention?)
-- [ ] gists with already prepared tanks in several different languages
 
-### Some Ideas
+### Software Design / Maintainability
+
+- [ ] Align (and bundle?) with latest client
+- [ ] CI (build docker container)
+- [ ] Remove unused endpoint(s) (start & update)
+- [ ] Store all game events (so you can replay the complete game): game was
+  reset, tank subscribed, game started, tank command executed, winner detected
+- [ ] DOS detection (and prevention?)
+- [ ] Monitoring
+- [ ] Decent REST API /world/1/tank/2
 
 - [ ] Hexagonal Design. Core contains mapping from positions to gameobjects.
       Boundary converts between normal world representation & position mapping.
