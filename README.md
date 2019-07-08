@@ -30,20 +30,32 @@ The running environment minimally contains:
 - BATTLE!
 - Repeat
 
-## Examples
-
-TODO: Add some code examples of moving the tank in curl, postman, javascript,
-clojure, etc.
-
 ## Development
 
 - Tested with leiningen 2.9.1 on Java 1.8.0_05. (known problems loading
   javax.bind.xml as of java 9 ... didn't bother to fix these java related
-  problems yet).
+  problems yet). So make sure your JAVA_HOME points to a java 8 distribution.
 
 - Test with `lein test`
 - Run server with `lein run` (kill it with Ctrl-C)
 - Build jar with `lein uberjar`
+- Measure coverage with `lein cloverage`
+- Find dead code with `lein yagni`
+- Get suggestions for more idiomatic Clojure with `lein kibit`
+
+Some REST calls I use for testing the server:
+
+``` bash
+curl -i -X GET  http://localhost:3000/world     -H 'Accept: application/edn'
+curl -i -X GET  http://localhost:3000/world     -H 'Accept: application/json'
+curl -i -X POST http://localhost:3000/subscribe -H 'Content-Type: application/json' -d '{"name": "Dr.Strange"}'
+curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "north"}'
+curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "east"}'
+curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "south"}'
+curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "west"}'
+curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "fire"}'
+curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -d '{"secret": "do not cheat!"}'
+```
 
 ## Credits
 
@@ -51,20 +63,12 @@ clojure, etc.
 
 ## Contributors
 
-- Jeroen van Wijgerden, who's building a [rendering
-  client](https://github.com/jeroenvanw/tank-battle-rendering) and helped
-  during design and development of the tankbattle server.
+- Jeroen van Wijgerden, who build a (privately hosted) tankbattle renderer and
+  helped during design and development of the tankbattle server.
 
 ## TODO
 
 ### Plan
-
-- [ ] cleanup expired explosions & lasers
-- [ ] calculate winner
-- [ ] stop when timer is finished
-- [ ] Manually Test (otherwise rely on the automated tests)
-
-If time permits:
 
 - [ ] Test client (so you can see the requests and responses in the developer
       console?)
@@ -80,8 +84,8 @@ If time permits:
 
 - [ ] Hexagonal Design. Core contains mapping from positions to gameobjects.
       Boundary converts between normal world representation & position mapping.
-- [ ] Return standard data object from core. Something like {:response ...
-      :error-message ...} and then make conversion to the outside world as thin
+- [ ] Return standard data object from core. Something like {:in ...
+      :out ... :err ...} and then make conversion to the outside world as thin
       as possible; basically only move data from Response object to external
       representation (like REST server or cmd client, or ...)
 - [ ] Some resources (mostly found in the talk pointed to in the first link)

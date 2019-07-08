@@ -22,14 +22,14 @@ aut faciam** or "I shall either find a way or make one" is our motto!
 
 # Tank Movement
 
-To drive your tanks you can either `:move-north`, `:move-east`,
-`:move-south` or `:move-west`. The tanks will move one tank-length in that
-direction on the battlefield, but the tank engines are known to drop dead
-directly after the move and restarting the engine costs 2 seconds. All movement
-commands given within this 2 seconds time-frame are simply neglected.
+To drive your tanks you can either command them to move `"north"`, `"east"`,
+`"south"` or `"west"`. The tanks will move one tank-length in that direction on
+the battlefield, but the tank engines are known to drop dead directly after the
+move and restarting the engine costs 2 seconds. All movement commands given
+within this 2 seconds time-frame are simply neglected.
 
-To fire the canon, you simply send the command `:fire`. Due to safety reasons a
-tank can only `:fire` after it hasn't moved for 2 seconds. The reloading mechanism
+To fire the canon, you simply send the command `"fire"`. Due to safety reasons a
+tank can only `"fire"` after it hasn't moved for 2 seconds. The reloading mechanism
 is terribly slow and you can only fire 5 seconds after your last shot. All fire
 commands given within this 5 seconds time-frame are completely neglected.
 
@@ -75,7 +75,7 @@ about the battlefield. For example:
 ```
 
 In addition to getting that information upon every REST API call, this
-information is also always available to you via the `/world/` endpoint.
+information is also always available to you via the `/world` endpoint.
 
 # Who am I?
 
