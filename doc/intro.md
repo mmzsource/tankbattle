@@ -16,13 +16,13 @@ very reliable. You control your tank via a hopelessly old fashioned, badly
 designed REST API. With a bit of luck, you can still find some information on
 REST API design in archaic parts of the internet archive.
 
-As a proud member of the software concepts department all these terrible
-limitations, budget cuts and constraints only motivate you. **Aut viam inveniam
-aut faciam** or "I shall either find a way or make one" is our motto!
+As a proud software professional all these terrible limitations, budget cuts and
+constraints only motivate you. **Aut viam inveniam aut faciam** or "I shall
+either find a way or make one" is your motto!
 
 # Tank Movement
 
-To drive your tanks you can either command them to move `"north"`, `"east"`,
+To drive your tank you can either command it to move `"north"`, `"east"`,
 `"south"` or `"west"`. The tanks will move one tank-length in that direction on
 the battlefield, but the tank engines are known to drop dead directly after the
 move and restarting the engine costs 2 seconds. All movement commands given

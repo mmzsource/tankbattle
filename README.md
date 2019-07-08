@@ -57,7 +57,6 @@ curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/js
 curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -d '{"secret": "do not cheat!"}'
 curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": "www\nw1w\nwww\n"}'
 curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": "wwwwwwwwwwww\nw....11....w\nw..........w\nw...tttt...w\nw..t....t..w\nw3.t....t.4w\nw3.t....t.4w\nw..t....t..w\nw...tttt...w\nw..........w\nw....22....w\nwwwwwwwwwwww\n"}'
-
 ```
 
 ## Credits
@@ -85,7 +84,7 @@ Furthermore:
 - [ ] Laser mirrors -> smallest possible change (?): simply have one more target
       type on the board that can be shot. Handle a laser shot exactly the same
       as it's handled now (so {:start-position [x1 y1] :end-position [x2 y2]
-      :direction :south) where start-position is still a tank and end-position
+      :direction :south}) where start-position is still a tank and end-position
       is now a laser-mirror. Then, after updating all tank shots, determine
       which laser-mirrors where hit, and fire another laser from that
       laser-mirror in the correct direction, using the same logic used when
@@ -101,8 +100,8 @@ Furthermore:
 ### Improving user experience
 
 - [ ] Serve intro doc as html
-- [ ] Test client (so you can see the requests and responses in the developer
-      console?)
+- [ ] Provide a test client (so you can see the requests and responses in the
+      developer console of a browser)
 - [ ] gists with already prepared tanks in several different languages
 - [ ] Swagger docs. (Or describe in the docs that the REST API isn't described
   properly, because Dutch army management 'wants working tanks, instead of
@@ -119,14 +118,15 @@ Furthermore:
 - [ ] Logging
 - [ ] Monitoring
 - [ ] Decent REST API /world/1/tank/2
-
 - [ ] Hexagonal Design. Core contains mapping from positions to gameobjects.
       Boundary converts between normal world representation & position mapping.
-- [ ] Return standard data object from core. Something like {:in ...
-      :out ... :err ...} and then make conversion to the outside world as thin
-      as possible; basically only move data from Response object to external
-      representation (like REST server or cmd client, or ...)
-- [ ] Some resources (mostly found in the talk pointed to in the first link)
+- [ ] Return standard data object from core. Something like {:out ... :err ...}
+      and then make conversion to the outside world as thin as possible;
+      basically only move data from Response object to external representation
+      (like REST server or cmd client, or web socket, or ...)
+
+### Data driven design ideas
+
 - Effect ive Clojure about data oriented Clojure -
   https://www.youtube.com/watch?v=IZlt6hH8YiA
 - UltraTestable Coding Style -
