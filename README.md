@@ -82,8 +82,21 @@ Design your own world:
 
 Furthermore:
 
-- [ ] Laser mirrors
-- [ ] Teleportation tiles
+- [ ] Laser mirrors -> smallest possible change (?): simply have one more target
+      type on the board that can be shot. Handle a laser shot exactly the same
+      as it's handled now (so {:start-position [x1 y1] :end-position [x2 y2]
+      :direction :south) where start-position is still a tank and end-position
+      is now a laser-mirror. Then, after updating all tank shots, determine
+      which laser-mirrors where hit, and fire another laser from that
+      laser-mirror in the correct direction, using the same logic used when
+      firing a tank. So for this laser, the start-position is the laser-mirror
+      position and the end-position depends on the placement of the mirror.
+- [ ] Teleportation tiles -> smallest possible change (?): keep a bidirectional
+      map with links between teleportation tiles, e.g. {[0 3] [12 6] [12 6] [0
+      3]}. Make sure a tank is allowed to move on a teleportation tile. When the
+      tank move is done (nothing needs to change there), use the new tank
+      position and the bidirectional map to find out if the tank should be
+      tele-ported and if so to which position it should be teleported.
 
 ### Improving user experience
 
@@ -103,6 +116,7 @@ Furthermore:
 - [ ] Store all game events (so you can replay the complete game): game was
   reset, tank subscribed, game started, tank command executed, winner detected
 - [ ] DOS detection (and prevention?)
+- [ ] Logging
 - [ ] Monitoring
 - [ ] Decent REST API /world/1/tank/2
 
