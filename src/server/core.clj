@@ -94,6 +94,24 @@
                              (let [world-to-validate (get-in ctx [:parameters :body :world])]
                                (core/validate world-to-validate)))}}}))
 
+;; experiment to make board design easier. Should coerce into a vec of vec of strings
+;; Test with:
+;; curl -i -X POST http://localhost:3000/test -H "Content-Type: application/json" -H "Accept: application/json" -d '{"vvs": [["abc"], ["def"], ["ghi"]]}'
+(defn test-coercion-resource []
+  (yada/resource
+   {:methods {:post
+              {:parameters {:body {:vvs [[s/Str]]}}
+               :consumes   "application/json"
+               :produces   #{"application/json" "application/edn"}
+               :response   (fn [ctx]
+                             (let [vec-of-vecs-of-str (get-in ctx [:parameters :body :vvs])]
+                               (if (and
+                                    (vector? vec-of-vecs-of-str)
+                                    (vector? (first vec-of-vecs-of-str))
+                                    (string? (first (first vec-of-vecs-of-str))))
+                                 "Yep, this works."
+                                 "Nope, try again.")))}}}))
+
 (defn routes []
   ["/"
    {
@@ -103,7 +121,8 @@
     "start"     (start-game-resource)
     "tank"      (cmd-tank-resource)
     "update"    (update-world-resource)
-    "validate"  (validate-world-resource)}])
+    "validate"  (validate-world-resource)
+    "test"      (test-coercion-resource)}])
 
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})
