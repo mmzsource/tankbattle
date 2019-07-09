@@ -104,13 +104,8 @@
                :consumes   "application/json"
                :produces   #{"application/json" "application/edn"}
                :response   (fn [ctx]
-                             (let [vec-of-vecs-of-str (get-in ctx [:parameters :body :vvs])]
-                               (if (and
-                                    (vector? vec-of-vecs-of-str)
-                                    (vector? (first vec-of-vecs-of-str))
-                                    (string? (first (first vec-of-vecs-of-str))))
-                                 "Yep, this works."
-                                 "Nope, try again.")))}}}))
+                             (let [world (get-in ctx [:parameters :body :vvs])]
+                               (core/validate world)))}}}))
 
 (defn routes []
   ["/"

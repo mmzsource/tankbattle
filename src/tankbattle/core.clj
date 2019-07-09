@@ -1,6 +1,7 @@
 (ns tankbattle.core
-  (:require [tankbattle.walls    :as wall]
-            [clojure.string :as str]))
+  (:require [tankbattle.walls :as wall]
+            [clojure.string   :as str]
+            [the-flood.core   :as flood]))
 
 ;; Validation of ids, commands, moves, directions etc will be done once on the
 ;; server boundary (as opposed to validating the values in each and every
@@ -101,7 +102,7 @@
 
 (defn known-chars? [split-world]
   (when (not (every? #(contains? valid-chars %) (flatten split-world)))
-    (format "Only valid characters are: wall: w , tree: t , tank: 1 2 3 or 4 , empty: . , newline to denote new row")))
+    (format "Only valid characters are: wall: w , tree: t , tank: 1 2 3 or 4 , empty: .")))
 
 (defn tanks? [split-world]
   (when (not (some #(= % \1) (flatten split-world)))
@@ -136,8 +137,51 @@
          (remove nil?)
          sequence)))
 
-(defn validate [world-to-validate]
+(defn validate [world]
+  (let [char-world        (mapv (fn [[row]] (into [] (seq row))) world)
+        validation-errors (->> world-structure-rules
+                               (map #(% char-world))
+                               (remove nil?)
+                               sequence)]
+    (if (empty? validation-errors)
+      (str (reduce (fn [acc val] (str acc "\n" val)) "World is valid:" (map #(reduce str %) char-world)) "\n")
+      (reduce (fn [acc val] (str acc "\n" val)) "World is invalid: " validation-errors))))
+
+(defn validate-old [world-to-validate]
   (let [validation-errors (validate-world world-to-validate)]
     (if (empty? validation-errors)
       (str "World is valid: \n" world-to-validate )
       (reduce (fn [acc val] (str acc "\n" val)) "World is invalid: " validation-errors))))
+
+(comment
+
+  (validate [["wwwwwwwwwwww"]
+             ["w....11....w"]
+             ["w..........w"]
+             ["w...tttt...w"]
+             ["w..t....t..w"]
+             ["w3.t....t.4w"]
+             ["w3.t....t.4w"]
+             ["w..t....t..w"]
+             ["w...tttt...w"]
+             ["w..........w"]
+             ["w....22....w"]
+             ["wwwwwwwwwwww"]])
+
+  (def default-board
+    [["wwwwwwwwwwww"]
+     ["w....11....w"]
+     ["w..........w"]
+     ["w...tttt...w"]
+     ["w..t....t..w"]
+     ["w3.t....t.4w"]
+     ["w3.t....t.4w"]
+     ["w..t....t..w"]
+     ["w...tttt...w"]
+     ["w..........w"]
+     ["w....22....w"]
+     ["wwwwwwwwwwww"]])
+
+  (let [char-world (mapv (fn [[row]] (into [] (seq row))) default-board)]
+    (flood/flood-fill char-world [1 1] \F))
+)
