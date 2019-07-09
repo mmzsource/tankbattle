@@ -84,28 +84,33 @@
                                    :response
                                    (assoc :status 400)))))}}}))
 
+(defn construct-response
+  "Expects a 'result' map with :out and :err keys.
+  Constructs the response object based on the contents of the result map.
+  The result maps are created in the domain layer to easily test the data
+  the domain returns. Furthermore, the returned data ensures a very thin
+  server layer which basically converts the result map to REST status, headers
+  and body."
+  [ctx result err-statuscode]
+  (if (= (result :err) :none)
+    (result :out)
+    (let [response (ctx :response)]
+      (-> response
+          (assoc :status err-statuscode)
+          (assoc :body   (result :err))))))
+
+(defn validate-world-response [ctx]
+  (let [world  (get-in ctx [:parameters :body :world])
+        result (core/validate world)]
+    (construct-response ctx result 422)))
+
 (defn validate-world-resource []
   (yada/resource
    {:methods {:post
-              {:parameters {:body {:world s/Str}}
+              {:parameters {:body {:world [[s/Str]]}} ;; vec-of-vecs-of-strings
                :consumes   "application/json"
                :produces   #{"application/json" "application/edn"}
-               :response   (fn [ctx]
-                             (let [world-to-validate (get-in ctx [:parameters :body :world])]
-                               (core/validate world-to-validate)))}}}))
-
-;; experiment to make board design easier. Should coerce into a vec of vec of strings
-;; Test with:
-;; curl -i -X POST http://localhost:3000/test -H "Content-Type: application/json" -H "Accept: application/json" -d '{"vvs": [["abc"], ["def"], ["ghi"]]}'
-(defn test-coercion-resource []
-  (yada/resource
-   {:methods {:post
-              {:parameters {:body {:vvs [[s/Str]]}}
-               :consumes   "application/json"
-               :produces   #{"application/json" "application/edn"}
-               :response   (fn [ctx]
-                             (let [world (get-in ctx [:parameters :body :vvs])]
-                               (core/validate world)))}}}))
+               :response   (fn [ctx] (validate-world-response ctx))}}}))
 
 (defn routes []
   ["/"
@@ -116,8 +121,7 @@
     "start"     (start-game-resource)
     "tank"      (cmd-tank-resource)
     "update"    (update-world-resource)
-    "validate"  (validate-world-resource)
-    "test"      (test-coercion-resource)}])
+    "validate"  (validate-world-resource)}])
 
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})

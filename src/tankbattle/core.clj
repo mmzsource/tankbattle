@@ -138,50 +138,45 @@
          sequence)))
 
 (defn validate [world]
-  (let [char-world        (mapv (fn [[row]] (into [] (seq row))) world)
+  (let [char-world        (mapv (fn [[row]] (into [] (seq row))) world) ;; convert to vec of vec of chars
         validation-errors (->> world-structure-rules
                                (map #(% char-world))
                                (remove nil?)
                                sequence)]
     (if (empty? validation-errors)
-      (str (reduce (fn [acc val] (str acc "\n" val)) "World is valid:" (map #(reduce str %) char-world)) "\n")
-      (reduce (fn [acc val] (str acc "\n" val)) "World is invalid: " validation-errors))))
-
-(defn validate-old [world-to-validate]
-  (let [validation-errors (validate-world world-to-validate)]
-    (if (empty? validation-errors)
-      (str "World is valid: \n" world-to-validate )
-      (reduce (fn [acc val] (str acc "\n" val)) "World is invalid: " validation-errors))))
+      {:out {:result "World is valid"} :err :none}
+      {:out :none                      :err {:result (into [] validation-errors)}})))
 
 (comment
 
-  (validate [["wwwwwwwwwwww"]
-             ["w....11....w"]
-             ["w..........w"]
-             ["w...tttt...w"]
-             ["w..t....t..w"]
-             ["w3.t....t.4w"]
-             ["w3.t....t.4w"]
-             ["w..t....t..w"]
-             ["w...tttt...w"]
-             ["w..........w"]
-             ["w....22....w"]
-             ["wwwwwwwwwwww"]])
+(validate [["wwwwwwwwwwww"]
+           ["w....11....w"]
+           ["w..........w"]
+           ["w...tttt...w"]
+           ["w..t....t..w"]
+           ["w3.t....t.4w"]
+           ["w3.t....t.4w"]
+           ["w..t....t..w"]
+           ["w...tttt...w"]
+           ["w..........w"]
+           ["w....22....w"]
+           ["wwwwwwwwwwwt"]])
 
-  (def default-board
-    [["wwwwwwwwwwww"]
-     ["w....11....w"]
-     ["w..........w"]
-     ["w...tttt...w"]
-     ["w..t....t..w"]
-     ["w3.t....t.4w"]
-     ["w3.t....t.4w"]
-     ["w..t....t..w"]
-     ["w...tttt...w"]
-     ["w..........w"]
-     ["w....22....w"]
-     ["wwwwwwwwwwww"]])
+(def default-board
+  [["wwwwwwwwwwww"]
+   ["w....11....w"]
+   ["w..........w"]
+   ["w...tttt...w"]
+   ["w..t....t..w"]
+   ["w3.t....t.4w"]
+   ["w3.t....t.4w"]
+   ["w..t....t..w"]
+   ["w...tttt...w"]
+   ["w..........w"]
+   ["w....22....w"]
+   ["wwwwwwwwwwww"]])
 
-  (let [char-world (mapv (fn [[row]] (into [] (seq row))) default-board)]
-    (flood/flood-fill char-world [1 1] \F))
+(let [char-world (mapv (fn [[row]] (into [] (seq row))) default-board)]
+  (flood/flood-fill char-world [1 1] \F))
+
 )
