@@ -176,7 +176,23 @@
    ["w....22....w"]
    ["wwwwwwwwwwww"]])
 
-(let [char-world (mapv (fn [[row]] (into [] (seq row))) default-board)]
-  (flood/flood-fill char-world [1 1] \F))
+(def lambda-board
+  [["wwwwwww.............."]
+   ["w......w............."]
+   ["wwww....w............"]
+   ["....w....w..........."]
+   [".....w....w.........."]
+   ["......w....w........."]
+   [".......w....w........"]
+   ["......w......w......."]
+   [".....w........w......"]
+   ["....w....ww....w....."]
+   ["...w....w..w....w...."]
+   ["..w....w....w....wwww"]
+   [".w....w......w......w"]
+   ["wwwwww........wwwwwww"]])
+
+(let [char-world (mapv (fn [[row]] (into [] (seq row))) lambda-board)]
+  (flood/flood-fill char-world [10 0] "F" nil))
 
 )

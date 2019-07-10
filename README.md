@@ -75,6 +75,7 @@ curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/jso
 
 - Jeroen van Wijgerden, who build a (privately hosted) tankbattle renderer and
   helped during design and development of the tankbattle server.
+- Gertjan Maas who created the docker file and helped deploying the server
 
 ## Some Ideas
 
@@ -84,8 +85,6 @@ Design your own world:
 
 - [X] endpoint to validate board-design (and explain what's wrong with it)
 - [ ] convert board-design to a game-world via the reset endpoint. Fallback: default world
-- [ ] currently validating string with \n ... could that be different? (file?
-      vec-of-vec?)
 
 Furthermore:
 
