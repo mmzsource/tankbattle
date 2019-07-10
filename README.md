@@ -38,7 +38,7 @@ The running environment minimally contains:
 
 - Test with `lein test`
 - Run server with `lein run` (kill it with Ctrl-C)
-- Build jar with `lein uberjar`
+- Build jar with `lein uberjar` and then run with `java -jar target/uberjar/tankbattle-0.1.0-SNAPSHOT-standalone.jar`
 - Measure coverage with `lein cloverage`
 - Find dead code with `lein yagni`
 - Get suggestions for more idiomatic Clojure with `lein kibit`

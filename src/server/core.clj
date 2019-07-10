@@ -3,7 +3,8 @@
     [yada.yada :as yada]
     [schema.core :as s]
     [tankbattle.core :as core]
-    [tankbattle.tank :as tank]))
+    [tankbattle.tank :as tank])
+  (:gen-class))
 
 ; simple atom for exposing a global function so the server can close itself
 (def server (atom nil))
