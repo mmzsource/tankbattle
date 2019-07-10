@@ -27,7 +27,7 @@
   (let [tank (create-tank 1 [2 3] :green "ALPHA-BRAVO-CHARLIE")]
     (is (map? tank))
     (is (= (into #{} (keys tank))
-           #{:id :name :position :orientation :energy :color
+           #{:id :uuid :name :position :orientation :energy :color
              :last-shot :reloaded :last-move :restarted :hits :kills}))
     (is (= (tank :id)       1))
     (is (= (tank :name)     "ALPHA-BRAVO-CHARLIE"))

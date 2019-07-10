@@ -85,20 +85,22 @@
                                    :response
                                    (assoc :status 400)))))}}}))
 
-(defn construct-response
-  "Expects a 'result' map with :out and :err keys.
-  Constructs the response object based on the contents of the result map.
-  The result maps are created in the domain layer to easily test the data
-  the domain returns. Furthermore, the returned data ensures a very thin
-  server layer which basically converts the result map to REST status, headers
-  and body."
-  [ctx result err-statuscode]
-  (if (= (result :err) :none)
-    (result :out)
-    (let [response (ctx :response)]
+(defn no-error? [result-map]
+  (= (result-map :err) :none))
+
+(defn construct-err [ctx result err-statuscode]
+  (let [response (ctx :response)]
       (-> response
           (assoc :status err-statuscode)
-          (assoc :body   (result :err))))))
+          (assoc :body   (result :err)))))
+
+(defn construct-response
+  "Expects a 'result' map with :out and :err keys.
+  Constructs the response data based on the contents of the result map"
+  [ctx result err-statuscode]
+  (if (no-error? result)
+    (result :out)
+    (construct-err ctx result err-statuscode)))
 
 (defn validate-world-response [ctx]
   (let [world  (get-in ctx [:parameters :body :world])
@@ -127,9 +129,7 @@
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})
         done     (promise)]
-    (reset! server (fn []
-                     ((:close listener))
-                     (deliver done :done)))
+    (reset! server (fn [] ((:close listener)) (deliver done :done)))
     done))
 
 (defn -main [& args]

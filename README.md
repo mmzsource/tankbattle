@@ -43,6 +43,14 @@ The running environment minimally contains:
 - Find dead code with `lein yagni`
 - Get suggestions for more idiomatic Clojure with `lein kibit`
 
+## Docker
+
+- Build a docker image with `docker build -t tankbattle:v01 .`
+- Image should be available in `docker images` list
+- Run with `docker run -d -p 3000:3000 --name tankbattle tankbattle:v01`
+
+## CURL for testing
+
 Some REST calls I use for testing the server:
 
 ``` bash

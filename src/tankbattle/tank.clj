@@ -7,7 +7,8 @@
   [position time]
   {:position   position
    :start-time time
-   :end-time   (+ time 4000)})
+   :end-time   (+ time 4000)
+   :uuid       (java.util.UUID/randomUUID)})
 
 (defn find-tank [world tankid]
   (let [tanks (world :tanks)]
@@ -21,6 +22,7 @@
 
 (defn create-tank [id position color name]
   {:id          id
+   :uuid        (java.util.UUID/randomUUID)
    :name        name
    :position    position
    :orientation (first (shuffle orientations))
@@ -120,7 +122,8 @@
                              :end-position   nrst-pos
                              :direction      orientation
                              :start-time     now
-                             :end-time       (+ now 2000)})]
+                             :end-time       (+ now 2000)
+                             :uuid           (java.util.UUID/randomUUID)})]
 
         (cond
           (= object-to-hit :tank)

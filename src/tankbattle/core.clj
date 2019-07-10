@@ -46,7 +46,7 @@
         (assoc :last-update now))))
 
 (defn tree [pos]
-  {:position pos :energy 1})
+  {:position pos :energy 1 :uuid (java.util.UUID/randomUUID)})
 
 (defn initial-trees [c r]
   (let [center-c (int (/ c 2))

@@ -22,4 +22,4 @@
 
 (defn create-walls [cols rows]
   (let [wps (wall-positions cols rows)]
-    (mapv (fn [wall-position] {:position wall-position}) wps)))
+    (mapv (fn [wall-position] {:position wall-position :uuid (java.util.UUID/randomUUID)}) wps)))
