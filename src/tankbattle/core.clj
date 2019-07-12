@@ -153,15 +153,7 @@
   (let [tanks (world :tanks)]
     (first (filter #(= (% :id) tankid) tanks))))
 
-(defn tank-index [world tankid]
-  (first
-    (map
-      (fn [[i _]] i)
-      (filter
-        (fn [[i the-one?]] the-one?)
-        (map-indexed
-          (fn [i tank] [i (= tankid (tank :id))])
-          (world :tanks))))))
+
 
 (defn valid-tankid? [world tankid]
   (not (nil? (find-tank world tankid))))
@@ -174,7 +166,7 @@
    :name        name
    :position    position
    :orientation (first (shuffle orientations))
-   :energy      10
+   :energy      3
    :color       color
    :last-shot   1234567890
    :reloaded    1234572890
@@ -183,7 +175,23 @@
    :hits        []
    :kills       []})
 
+(defn random-empty-position [world]
+  (let [positions (set (for [c (range (get-in world [:dimensions :width]))
+                        r (range (get-in world [:dimensions :height]))]
+                      [c r]))
+        taken-positions
+                  (set (apply concat (map
+                    (fn [k]
+                      (map
+                        (fn [entity] (entity :position))
+                        (world k)))
+                    [:tanks :walls :trees])))]
+                (first (clojure.set/difference positions taken-positions))))
 
+(def w {:av-ids #{2}, :av-pos #{[1 6]}, :tanks [{:kills [], :last-move 1562066828817, :color :yellow, :reloaded 1562066833817, :restarted 1562066830817, :name "Many 🐞🐞 - Massive 💩", :orientation :south, :energy 3, :hits [], :id 1, :position [6 1], :last-shot 1562066828817} {:kills [], :last-move 1562066829143, :color :green, :reloaded 1562066834143, :restarted 1562066831143, :name "🎯CannonFodder🎯", :orientation :north, :energy 3, :hits [], :id 4, :position [9 4], :last-shot 1562066829143} {:kills [], :last-move 1562066827821, :color :red, :reloaded 1234572890, :restarted 1562066829821, :name "barbie", :orientation :east, :energy 3, :hits [], :id 3, :position [8 10], :last-shot 1234567890}], :av-cls #{:blue}, :time 1562066829178, :walls [{:position [8 11]} {:position [11 9]} {:position [11 2]} {:position [7 11]} {:position [0 0]} {:position [1 0]} {:position [0 6]} {:position [0 5]} {:position [11 0]} {:position [3 0]} {:position [9 0]} {:position [11 11]} {:position [4 11]} {:position [0 9]} {:position [8 0]} {:position [11 4]} {:position [11 8]} {:position [1 11]} {:position [10 0]} {:position [11 10]} {:position [10 11]} {:position [11 6]} {:position [11 3]} {:position [0 3]} {:position [2 11]} {:position [5 11]} {:position [0 7]} {:position [9 11]} {:position [6 11]} {:position [11 1]} {:position [11 7]} {:position [7 0]} {:position [0 2]} {:position [2 0]} {:position [0 4]} {:position [3 11]} {:position [0 10]} {:position [11 5]} {:position [0 11]} {:position [5 0]} {:position [6 0]} {:position [0 8]} {:position [0 1]} {:position [4 0]}], :dimensions {:width 12, :height 12}, :headers {"Access-Control-Allow-Origin" "*"}, :explosions [], :last-update 1562066829178, :lasers [{:start-position [6 2], :end-position [6 11], :direction :south, :start-time 1562066828817, :end-time 1562066830817} {:start-position [9 3], :end-position [9 0], :direction :north, :start-time 1562066829143, :end-time 1562066831143}], :trees [{:position [8 7], :energy 1} {:position [4 3], :energy 1} {:position [8 4], :energy 1} {:position [3 4], :energy 1} {:position [7 3], :energy 1} {:position [8 6], :energy 1} {:position [7 8], :energy 1} {:position [5 3], :energy 1} {:position [4 8], :energy 1} {:position [5 8], :energy 1} {:position [8 5], :energy 1} {:position [3 6], :energy 1} {:position [3 7], :energy 1} {:position [3 5], :energy 1}], :moment-created 1562050454437}
+)
+
+(random-empty-position w)
 
 (defn subscribe-tank
   [world tank-name]
@@ -199,12 +207,12 @@
           color               (first available-colors)
           remaining-colors    (into #{} (rest available-colors))
           new-tank            (create-tank id position color tank-name)]
-      (-> world
+      [(-> world
           (assoc     :last-update (System/currentTimeMillis))
           (assoc     :av-ids      remaining-ids)
           (assoc     :av-pos      remaining-pos)
           (assoc     :av-cls      remaining-colors)
-          (update-in [:tanks]     conj new-tank)))
+          (update-in [:tanks]     conj new-tank)) id])
     world))
 
 (defn move [world tankid direction]
@@ -228,7 +236,7 @@
             (not restarted))             ;; .. or the tank is not yet restarted
 
       ;; return world
-      world
+      [world "false"]
 
       ;; else:
       (let [;; update the tank
@@ -244,11 +252,24 @@
 
             ;; add the new tanks into a new world state
             new-world (assoc world :tanks (unmap-positions new-tanks))]
-        new-world))))
+        [new-world "true"]))))
 
-(defn turn [world tankid]
-  (let [tank (find-tank world tankid)]
-    ))
+(defn tank-index [world tankid]
+  (first
+    (map
+      (fn [[i _]] i)
+      (filter
+        (fn [[i the-one?]] the-one?)
+        (map-indexed
+          (fn [i tank] [i (= tankid (tank :id))])
+          (world :tanks))))))
+
+(defn turn [world tankid orientation]
+  (if (contains? orientations orientation)
+    (let [tank (find-tank world tankid)
+          tank-index (tank-index world tankid)]
+        [(assoc-in world [:tanks tank-index :orientation] orientation) true])
+    [world false]))
 
 (defn fire [world tankid]
   (let [now         (System/currentTimeMillis)
@@ -306,6 +327,7 @@
                 updated-tank-map (if destroyed?
                                    (-> tanks-map
                                        (dissoc hit-tank-pos)
+                                       ;(assoc [(-(updated-hit-tank :id)) 1] updated-hit-tank)
                                        (assoc  tank-pos [updated-src-tank]))
                                    (-> tanks-map
                                        (assoc hit-tank-pos [updated-hit-tank])
@@ -321,11 +343,11 @@
                                        :end-time   (+ now 4000)})
                                      (world :explosions))]
 
-            (-> world
+            [(-> world
                 (assoc :tanks       updated-tanks)
                 (assoc :explosions  updated-explosions)
                 (assoc :lasers      updated-lasers)
-                (assoc :last-update now)))
+                (assoc :last-update now)) "true"])
 
           (= object-to-hit :tree)
           ;; handle-tree-hit
@@ -362,12 +384,12 @@
                                        :end-time   (+ now 4000)})
                                      (world :explosions))]
 
-            (-> world
+            [(-> world
                 (assoc :tanks       updated-tanks)
                 (assoc :trees       updated-trees)
                 (assoc :explosions  updated-explosions)
                 (assoc :lasers      updated-lasers)
-                (assoc :last-update now)))
+                (assoc :last-update now)) "true"])
 
           (= object-to-hit :wall)
           ;; handle-wall-hit
@@ -379,18 +401,18 @@
                 updated-tank-map (assoc tanks-map tank-pos [updated-tank])
                 updated-tanks    (unmap-positions updated-tank-map)]
 
-            (-> world
+            [(-> world
                 (assoc :tanks       updated-tanks)
                 (assoc :lasers      updated-lasers)
-                (assoc :last-update now)))
-          :else world))
-      world)))
+                (assoc :last-update now)) "true"])
+          :else [world "true"]))
+      [world "false"])))
 
 (defn update-tank [world tankid cmd]
   (cond
     (contains? #{"north" "east" "south" "west"} cmd) (move world tankid cmd)
     (= cmd "fire")                                   (fire world tankid)
-    :else                                            world))
+    :else                                            [world "false"]))
 
 (defn detect-winner [world]
   world)
@@ -541,7 +563,7 @@
         (assoc :last-update now))))
 
 (defn tree [pos]
-  {:position pos :energy 3})
+  {:position pos :energy 1})
 
 (defn initial-trees [c r]
   (let [center-c (int (/ c 2))
