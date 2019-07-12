@@ -1,16 +1,6 @@
 (ns tankbattle.core
   (:require [tankbattle.walls :as wall]
-            [clojure.string   :as str]
-            [the-flood.core   :as flood]))
-
-;; Validation of ids, commands, moves, directions etc will be done once on the
-;; server boundary (as opposed to validating the values in each and every
-;; function)
-
-;;;;;;;;;;;
-;; WORLD ;;
-;;;;;;;;;;;
-
+            [clojure.string   :as str]))
 
 (defn started? [world]
   (contains? world :game-end))
@@ -83,52 +73,54 @@
 
 (def valid-chars #{\w \t \1 \2 \3 \4 \.})
 
-(defn empty-world? [split-world]
+(defn empty-world [split-world]
   (when (empty? (flatten split-world))
     "An empty world is not allowed."))
 
-(defn rows-size? [split-world]
-  (when (< (count split-world) 3)
-    "Number of rows should be at least 3."))
+(defn rows-size [split-world]
+  (when (or  (< (count split-world) 3)
+             (> (count split-world) 31))
+    "Number of rows should be >= 3 and <= 31."))
 
-(defn cols-size? [split-world]
-  (when (< (count (first split-world)) 3)
-    "Number of columns should be at least 3."))
+(defn cols-size [split-world]
+  (when (or (< (count (first split-world)) 3)
+            (> (count (first split-world)) 31))
+    "Number of columns should be >= 3 and <= 31."))
 
-(defn cols-count? [split-world]
+(defn cols-count [split-world]
   (let [cols (count (first split-world))]
-    (when (not (every? #(= (count %) cols) split-world))
+    (when-not (every? #(= (count %) cols) split-world)
       "Each row should have an equal amount of cols.")))
 
-(defn known-chars? [split-world]
-  (when (not (every? #(contains? valid-chars %) (flatten split-world)))
+(defn known-chars [split-world]
+  (when-not (every? #(contains? valid-chars %) (flatten split-world))
     (format "Only valid characters are: wall: w , tree: t , tank: 1 2 3 or 4 , empty: .")))
 
-(defn tanks? [split-world]
-  (when (not (some #(= % \1) (flatten split-world)))
+(defn tanks [split-world]
+  (when-not (some #(= % \1) (flatten split-world))
     "Should contain at least 1 tank and that one should have id 1."))
 
-(defn north-walls? [split-world]
-  (when (not (every? #(= \w %) (first split-world)))
+(defn north-walls [split-world]
+  (when-not (every? #(= \w %) (first split-world))
     "First row should only contain walls"))
 
-(defn south-walls? [split-world]
-  (when (not (every? #(= \w %) (last split-world)))
+(defn south-walls [split-world]
+  (when-not (every? #(= \w %) (last split-world))
     "Last row should only contain walls"))
 
-(defn west-walls? [split-world]
+(defn west-walls [split-world]
   (let [first-col (map first split-world)]
-    (when (not (every? #(= \w %) first-col))
+    (when-not (every? #(= \w %) first-col)
       "First col should only contain walls")))
 
-(defn east-walls? [split-world]
+(defn east-walls [split-world]
   (let [last-col (map last split-world)]
-    (when (not (every? #(= \w %) last-col))
+    (when-not (every? #(= \w %) last-col)
       "Last col should only contain walls")))
 
 (def world-structure-rules
-  [empty-world? rows-size? cols-size? cols-count? known-chars? tanks?
-   north-walls? south-walls? west-walls? east-walls?])
+  [empty-world rows-size cols-size cols-count known-chars tanks
+   north-walls south-walls west-walls east-walls])
 
 (defn validate-world [world]
   (let [split-world (mapv vec (str/split-lines world))]
@@ -138,7 +130,7 @@
          sequence)))
 
 (defn validate [world]
-  (let [char-world        (mapv (fn [[row]] (into [] (seq row))) world) ;; convert to vec of vec of chars
+  (let [char-world        (mapv (fn [[row]] (vec (seq row))) world) ;; convert to vec of vec of chars
         validation-errors (->> world-structure-rules
                                (map #(% char-world))
                                (remove nil?)
@@ -160,7 +152,7 @@
            ["w...tttt...w"]
            ["w..........w"]
            ["w....22....w"]
-           ["wwwwwwwwwwwt"]])
+           ["wwwwwwwwwwww"]])
 
 (def default-board
   [["wwwwwwwwwwww"]
@@ -176,7 +168,7 @@
    ["w....22....w"]
    ["wwwwwwwwwwww"]])
 
-(def lambda-board
+(validate
   [["wwwwwww.............."]
    ["w......w............."]
    ["wwww....w............"]
@@ -191,8 +183,5 @@
    ["..w....w....w....wwww"]
    [".w....w......w......w"]
    ["wwwwww........wwwwwww"]])
-
-(let [char-world (mapv (fn [[row]] (into [] (seq row))) lambda-board)]
-  (flood/flood-fill char-world [10 0] "F" nil))
 
 )

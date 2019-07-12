@@ -124,7 +124,7 @@ Furthermore:
 - [ ] DOS detection (and prevention?)
 - [ ] Logging
 - [ ] Monitoring
-- [ ] Decent REST API /world/1/tank/2
+- [ ] Decent REST API? /world/1/tank/2
 - [ ] Hexagonal Design. Core contains mapping from positions to gameobjects.
       Boundary converts between normal world representation & position mapping.
 - [ ] Return standard data object from core. Something like {:out ... :err ...}
