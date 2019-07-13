@@ -51,7 +51,7 @@ The running environment minimally contains:
 
 ## CURL for testing
 
-Some REST calls I use for testing the server:
+Some REST calls I use for e2e testing of the server:
 
 ``` bash
 curl -i -X GET  http://localhost:3000/world     -H 'Accept: application/edn'
@@ -64,7 +64,7 @@ curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/js
 curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "fire"}'
 curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -d '{"secret": "do not cheat!"}'
 curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": [["www"],["w1w"],["www"]]}'
-curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": [["wwwwwwwwwwww"], ["w....11....w"], ["w..........w"], ["w...tttt...w"], ["w..t....t..w"], ["w3.t....t.4w"], ["w3.t....t.4w"], ["w..t....t..w"], ["w...tttt...w"], ["w..........w"], ["w....22....w"], ["wwwwwwwwwwww"]]}'
+curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": [["wwwwwwwwwwww"], ["w....1.....w"], ["w..........w"], ["w...tttt...w"], ["w..t....t..w"], ["w3.t....t..w"], ["w..t....t.4w"], ["w..t....t..w"], ["w...tttt...w"], ["w..........w"], ["w.....2....w"], ["wwwwwwwwwwww"]]}'
 ```
 
 ## Credits
