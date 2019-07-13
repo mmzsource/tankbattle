@@ -73,3 +73,23 @@
 
 (defn validate [world]
   (board/validate world))
+
+(defn create [world]
+  (let [created    (System/currentTimeMillis)
+        dimensions (board/get-dimensions world)
+        walls      (board/get-walls world)
+        trees      (board/get-trees world)]
+    {:moment-created created
+     :last-update    created
+     :dimensions     dimensions
+     :walls          walls
+     :trees          trees
+     :tanks          []
+     :lasers         []
+     :explosions     []}))
+
+(comment
+
+  (atom (create [["www"] ["w1w"] ["www"]]))
+
+  )

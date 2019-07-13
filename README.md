@@ -76,6 +76,9 @@ curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/jso
 - Jeroen van Wijgerden, who build a (privately hosted) tankbattle renderer and
   helped during design and development of the tankbattle server.
 - Gertjan Maas who created the docker file and helped deploying the server
+- Jasper Stam who build an awesome [tankbattle
+  renderer](https://github.com/stam/tankbattle-renderer) (and kept asking for
+  new cool features)
 
 ## Some Ideas
 
@@ -116,6 +119,9 @@ Furthermore:
 
 ### Software Design / Maintainability
 
+- [ ] Replace yada. Its coersion magic does not fit well with how my brain works
+      and I haven't found enough documentation or examples to finally see the
+      light.
 - [ ] Align (and bundle?) with latest client
 - [ ] CI (build docker container)
 - [ ] Remove unused endpoint(s) (start & update)

@@ -61,16 +61,26 @@
 (defn- checkborders [char-world]
   (every? true? ((juxt north east south west) char-world)))
 
-(defn- collect-tankpos [char-world]
+(defn- collect-positions [char-world charset]
   (for [row   (range 0 (count char-world))
         col   (range 0 (count (first char-world)))
-        :when (contains? #{\1 \2 \3 \4} (get-in char-world [row col]))]
+        :when (contains? charset (get-in char-world [row col]))]
     [row col]))
+
+(defn- collect-tankpos [char-world]
+  (collect-positions char-world #{\1 \2 \3 \4}))
+
+(defn- rc->xy
+  "this namespace mostly works with [row col] coordinates because that lines up
+  nicely with clojure core methods like get-in. However, the rest of the name-
+  spaces work with [x y] coordinates. Therefore a mapping is needed from
+  [row col] to [x y]"
+  [[r c]] [c r])
 
 (defn- replace-volatiles
   "only walls and empty spaces last 'forever'. the rest of the gameobjects is volatile"
   [world-row]
-  [(str/replace (apply str world-row) #"[^w.]" ".")])
+  [(str/replace (clojure.string/join world-row) #"[^w.]" ".")])
 
 (defn- prepare-floodfill [char-world]
   (ff/to-chars (mapv replace-volatiles char-world)))
@@ -80,14 +90,14 @@
         prepared (prepare-floodfill char-world)
         flooded  (map #(ff/floodfill prepared % \.) tankpos)
         checked  (map checkborders flooded)]
-    (when-not (every? #(= true %) checked)
+    (when-not (every? true? checked)
       "Tanks should be surrounded by walls so they cannot vanish into the void")))
 
 (def world-structure-rules
   [empty-world rows-size cols-size cols-count known-chars tank-presence tank-duplication surrounded])
 
 (defn validate [world]
-  (let [char-world        (mapv (fn [[row]] (vec (seq row))) world) ;; convert to vec of vec of chars
+  (let [char-world        (ff/to-chars world)
         validation-errors (->> world-structure-rules
                                (map #(% char-world))
                                (remove nil?)
@@ -95,6 +105,23 @@
     (if (empty? validation-errors)
       {:out {:result "World is valid"} :err :none}
       {:out :none                      :err {:result (into [] validation-errors)}})))
+
+(defn get-dimensions [board]
+  (let [char-board (ff/to-chars board)]
+    {:width  (count (first char-board))
+     :height (count char-board)}))
+
+(defn get-walls [board]
+  (let [char-board     (ff/to-chars board)
+        wall-positions-rc (collect-positions char-board #{\w})
+        wall-positions-xy (mapv rc->xy wall-positions-rc)]
+    (mapv #(hash-map :position % :uuid (java.util.UUID/randomUUID)) wall-positions-xy)))
+
+(defn get-trees [board]
+  (let [char-board        (ff/to-chars board)
+        tree-positions-rc (collect-positions char-board #{\t})
+        tree-positions-xy (mapv rc->xy tree-positions-rc)]
+    (mapv #(hash-map :position % :energy 1 :uuid (java.util.UUID/randomUUID)) tree-positions-xy)))
 
 (comment
 

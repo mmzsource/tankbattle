@@ -59,3 +59,23 @@
   (let [valid (validate [[".w."] ["w1w"] [".w."]])]
     (is (= (valid :err) :none))
     (is (= (valid :out) {:result "World is valid"}))))
+
+(deftest calculates-dimensions-properly
+  (let [board [[".w."] ["w1w"] ["w2w"] [".w."]]]
+    (is (= (get-dimensions board) {:width 3 :height 4}))))
+
+(deftest creates-walls-properly
+  (let [board     [[".w."] ["w1w"] [".w."]]
+        walls     (get-walls board)
+        positions (mapv :position walls)]
+    (is (= (count walls) 4))
+    (is (= (set (keys (first walls))) #{:position :uuid}))
+    (is (= positions [[1 0] [0 1] [2 1] [1 2]]))))
+
+(deftest creates-trees-properly
+  (let [board     [["wwww"] ["w1tw"] ["w2tw"] ["wwww"]]
+        trees     (get-trees board)
+        positions (mapv :position trees)]
+    (is (= (count trees) 2))
+    (is (= (set (keys (first trees))) #{:position :energy :uuid}))
+    (is (= positions [[2 1] [2 2]]))))
