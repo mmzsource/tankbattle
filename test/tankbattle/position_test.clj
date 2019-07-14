@@ -2,26 +2,6 @@
   (:require [clojure.test :refer :all]
             [tankbattle.position :refer :all]))
 
-(deftest random-position-generation
-  (let [rndpos (generate-random-position 10 5)]
-    (is (vector? rndpos))
-    (is (=  (count rndpos)  2))
-    (is (>= (first rndpos)  0))
-    (is (<= (first rndpos) 10))
-    (is (>= (last  rndpos)  0))
-    (is (<= (last  rndpos)  5))))
-
-(deftest random-position-generation-on-restricted-gameboard-area
-  (let [rndpos (generate-random-position 2 4 6 8)]
-    (is (>= (first rndpos) 2))
-    (is (<= (first rndpos) 4))
-    (is (>= (last  rndpos) 6))
-    (is (<= (last  rndpos) 8))))
-
-(deftest not-so-random-position-generation-in-col3-row4
-  (let [rndpos (generate-random-position 3 3 4 4)]
-    (is (= rndpos [3 4]))))
-
 (deftest calculate-positions
   (let [nesw ((juxt north-of east-of south-of west-of) [4 4])]
     (is (= nesw [[4 3] [5 4] [4 5] [3 4]]))))

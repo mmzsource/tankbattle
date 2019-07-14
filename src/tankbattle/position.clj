@@ -1,13 +1,5 @@
 (ns tankbattle.position)
 
-(defn generate-random-position
-  "generates one random position on the board within given bounds"
-  ([cols rows]
-   (generate-random-position 0 cols 0 rows))
-  ([mincol maxcol minrow maxrow]
-   [(rand-nth (range mincol (inc maxcol)))
-    (rand-nth (range minrow (inc maxrow)))]))
-
 (defn north-of [[x y]] [x (dec y)])
 (defn south-of [[x y]] [x (inc y)])
 (defn east-of  [[x y]] [(inc x) y])

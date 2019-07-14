@@ -1,17 +1,32 @@
 (ns server.core
   (:require
-    [yada.yada :as yada]
-    [schema.core :as s]
-    [tankbattle.core :as core]
-    [tankbattle.tank :as tank])
+    [yada.yada        :as yada]
+    [schema.core      :as s]
+    [tankbattle.core  :as core]
+    [tankbattle.tank  :as tank]
+    [tankbattle.board :as board])
   (:gen-class))
 
 ; simple atom for exposing a global function so the server can close itself
 (def server (atom nil))
 
-(def new-world (core/init-world))
+(def default-board
+  [["wwwwwwwwwwww"]
+   ["w....1.....w"]
+   ["w..........w"]
+   ["w...tttt...w"]
+   ["w..t....t..w"]
+   ["w..t....t.4w"]
+   ["w3.t....t..w"]
+   ["w..t....t..w"]
+   ["w...tttt...w"]
+   ["w..........w"]
+   ["w.....2....w"]
+   ["wwwwwwwwwwww"]])
 
-(def world (atom (core/init-world)))
+(def new-world (core/create default-board))
+
+(def world (atom (core/create default-board)))
 
 (defn world-resource []
   (yada/resource
@@ -43,7 +58,7 @@
                :response   (fn [ctx]
                              (if (free-spot? @world)
                                (let [name         (get-in ctx [:parameters :body :name])
-                                     updated-world (core/subscribe-tank @world name)]
+                                     updated-world (tank/subscribe-tank @world name)]
                                  (reset! world updated-world))
                                (-> ctx :response (assoc :status 403))))}}}))
 
@@ -94,20 +109,6 @@
     (result :out)
     (construct-err ctx result err-statuscode)))
 
-(def default-board
-  [["wwwwwwwwwwww"]
-   ["w....1.....w"]
-   ["w..........w"]
-   ["w...tttt...w"]
-   ["w..t....t..w"]
-   ["w..t....t.4w"]
-   ["w3.t....t..w"]
-   ["w..t....t..w"]
-   ["w...tttt...w"]
-   ["w..........w"]
-   ["w.....2....w"]
-   ["wwwwwwwwwwww"]])
-
 (defn reset-world-resource []
   (yada/resource
    {:methods {:post
@@ -117,25 +118,13 @@
                :produces   #{"application/edn" "application/json"}
                :response   (fn [ctx] (let [secret (get-in ctx [:parameters :body :secret])
                                           board  (get-in ctx [:parameters :body :board] default-board)
-                                          validation-result (core/validate board)]
+                                          validation-result (board/validate board)]
                                       (if (= "do not cheat!" secret)
                                         (if (no-error? validation-result)
                                           (reset! world (core/create board))
                                           (construct-err ctx validation-result 422))
                                         (construct-err ctx {:err {:result "To reset the board, you'll have to know the secret."}} 401))))}}}))
 
-(defn validate-world-response [ctx]
-  (let [world  (get-in ctx [:parameters :body :world])
-        result (core/validate world)]
-    (construct-response ctx result 422)))
-
-(defn validate-world-resource []
-  (yada/resource
-   {:methods {:post
-              {:parameters {:body {:world [[s/Str]]}} ;; vec-of-vecs-of-strings
-               :consumes   "application/json"
-               :produces   #{"application/json" "application/edn"}
-               :response   (fn [ctx] (validate-world-response ctx))}}}))
 
 (defn routes []
   ["/"
@@ -145,8 +134,7 @@
     "reset"     (reset-world-resource)
     "start"     (start-game-resource)
     "tank"      (cmd-tank-resource)
-    "update"    (update-world-resource)
-    "validate"  (validate-world-resource)}])
+    "update"    (update-world-resource)}])
 
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})

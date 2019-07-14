@@ -38,7 +38,7 @@
 (defn subscribe-tank
   [world tank-name]
   ;; only subscribe when there is still room left for tanks
-  (if (> (count (world :available)) 0)
+  (if (pos? (count (world :available)))
     (let [available-options (world :available)
           option            (first available-options)
           remaining-options (vec (rest available-options))
