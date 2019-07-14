@@ -1,6 +1,7 @@
 (ns tankbattle.core
   (:require [tankbattle.walls :as wall]
-            [tankbattle.board :as board]))
+            [tankbattle.board :as board]
+            [tankbattle.tank :as tank]))
 
 (defn started? [world]
   (contains? world :game-end))
@@ -71,6 +72,9 @@
      :lasers         []
      :explosions     []}))
 
+(defn subscribe-tank [world tank-name]
+  (tank/subscribe-tank world tank-name))
+
 (defn validate [world]
   (board/validate world))
 
@@ -78,18 +82,15 @@
   (let [created    (System/currentTimeMillis)
         dimensions (board/get-dimensions world)
         walls      (board/get-walls world)
-        trees      (board/get-trees world)]
+        trees      (board/get-trees world)
+        available  (board/get-tanks world)]
     {:moment-created created
      :last-update    created
      :dimensions     dimensions
      :walls          walls
      :trees          trees
+     :available      available
+     :playing        []
      :tanks          []
      :lasers         []
      :explosions     []}))
-
-(comment
-
-  (atom (create [["www"] ["w1w"] ["www"]]))
-
-  )

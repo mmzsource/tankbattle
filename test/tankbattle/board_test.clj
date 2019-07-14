@@ -79,3 +79,8 @@
     (is (= (count trees) 2))
     (is (= (set (keys (first trees))) #{:position :energy :uuid}))
     (is (= positions [[2 1] [2 2]]))))
+
+(deftest creates-available-tanks
+  (let [board     [["wwww"] ["w1t1"] ["w2tw"] ["wwww"]]
+        available (get-tanks board)]
+    (is (= available [{:id 1 :position [1 1] :color :red} {:id 2 :position [1 2] :color :green}]))))

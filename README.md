@@ -62,21 +62,34 @@ curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/js
 curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "south"}'
 curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "west"}'
 curl -i -X POST http://localhost:3000/tank      -H 'Content-Type: application/json' -d '{"tankid": 1, "command": "fire"}'
+
+# default world
 curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -d '{"secret": "do not cheat!"}'
+
+# default world
+curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"secret": "do not cheat!", "board": [["wwwwwwwwwwww"], ["w....1.....w"], ["w..........w"], ["w...tttt...w"], ["w..t....t..w"], ["w..t....t.4w"], ["w3.t....t..w"], ["w..t....t..w"], ["w...tttt...w"], ["w..........w"], ["w.....2....w"], ["wwwwwwwwwwww"]]}'
+
+# easy for E2E test on a renderer
+curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"secret": "do not cheat!", "board": [[".wwwww."], ["w1.t.2w"], [".wwwww."]]}'
+
+# lambda world
+curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"secret": "do not cheat!", "board": [["wwwwwww.............."],["w1.....w............."],["wwww....w............"],["....w....w..........."],[".....w....w.........."],["......w....w........."],[".......wttttw........"],["......wttttttw......."],[".....wttttttttw......"],["....w....ww....w....."],["...w....w..w....w...."],["..w....w....w....wwww"],[".w2...w......w.....3w"],["wwwwww........wwwwwww"]]}'
+
 curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": [["www"],["w1w"],["www"]]}'
 curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": [["wwwwwwwwwwww"], ["w....1.....w"], ["w..........w"], ["w...tttt...w"], ["w..t....t..w"], ["w3.t....t..w"], ["w..t....t.4w"], ["w..t....t..w"], ["w...tttt...w"], ["w..........w"], ["w.....2....w"], ["wwwwwwwwwwww"]]}'
 ```
 
 ## Credits
 
-- Arjen van Schie for the idea
+- Arjen van Schie for the tankbattle idea he presented at a Devnology meetup
+  years ago.
 
 ## Contributors
 
-- Jeroen van Wijgerden, who build a (privately hosted) tankbattle renderer and
+- Jeroen van Wijgerden, who built a (privately hosted) tankbattle renderer and
   helped during design and development of the tankbattle server.
 - Gertjan Maas who created the docker file and helped deploying the server
-- Jasper Stam who build an awesome [tankbattle
+- Jasper Stam who built an awesome [tankbattle
   renderer](https://github.com/stam/tankbattle-renderer) (and kept asking for
   new cool features)
 

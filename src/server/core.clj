@@ -32,17 +32,8 @@
               {:response (fn [_]
                            (swap! world assoc :last-update (System/currentTimeMillis)))}}}))
 
-(defn reset-world-resource []
-  (yada/resource
-   {:methods {:post
-              {:parameters {:body {:secret s/Str}}
-               :consumes   "application/json"
-                :response (fn [ctx]
-                           (if (= "do not cheat!" (get-in ctx [:parameters :body :secret]))
-                            (reset! world new-world)))}}}))
-
 (defn free-spot? [world]
-  (pos? (count (world :av-ids))))
+  (pos? (count (world :available))))
 
 (defn subscribe-tank-resource []
   (yada/resource
@@ -52,10 +43,11 @@
                :response   (fn [ctx]
                              (if (free-spot? @world)
                                (let [name         (get-in ctx [:parameters :body :name])
-                                     updated-world (tank/subscribe-tank @world name)]
+                                     updated-world (core/subscribe-tank @world name)]
                                  (reset! world updated-world))
                                (-> ctx :response (assoc :status 403))))}}}))
 
+;; DEPRICATED
 (defn start-game-resource []
   (yada/resource
    {:methods {:post
@@ -101,6 +93,36 @@
   (if (no-error? result)
     (result :out)
     (construct-err ctx result err-statuscode)))
+
+(def default-board
+  [["wwwwwwwwwwww"]
+   ["w....1.....w"]
+   ["w..........w"]
+   ["w...tttt...w"]
+   ["w..t....t..w"]
+   ["w..t....t.4w"]
+   ["w3.t....t..w"]
+   ["w..t....t..w"]
+   ["w...tttt...w"]
+   ["w..........w"]
+   ["w.....2....w"]
+   ["wwwwwwwwwwww"]])
+
+(defn reset-world-resource []
+  (yada/resource
+   {:methods {:post
+              {:parameters {:body {:secret s/Str
+                                   (s/optional-key :board)  [[s/Str]]}}
+               :consumes   "application/json"
+               :produces   #{"application/edn" "application/json"}
+               :response   (fn [ctx] (let [secret (get-in ctx [:parameters :body :secret])
+                                          board  (get-in ctx [:parameters :body :board] default-board)
+                                          validation-result (core/validate board)]
+                                      (if (= "do not cheat!" secret)
+                                        (if (no-error? validation-result)
+                                          (reset! world (core/create board))
+                                          (construct-err ctx validation-result 422))
+                                        (construct-err ctx {:err {:result "To reset the board, you'll have to know the secret."}} 401))))}}}))
 
 (defn validate-world-response [ctx]
   (let [world  (get-in ctx [:parameters :body :world])

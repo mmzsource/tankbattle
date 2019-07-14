@@ -36,19 +36,20 @@
 
 (deftest tank-subscription
   (let [old-world {:last-update 123567890
-                   :av-ids      #{1 2 3 4}
-                   :av-pos      #{[1 1] [2 2] [3 3] [4 4]}
-                   :av-cls      #{:red :green :yellow :blue}
+                   :available   [{:id 1 :position [1 1] :color :red}
+                                 {:id 2 :position [2 2] :color :green}
+                                 {:id 3 :position [3 3] :color :yellow}
+                                 {:id 4 :position [4 4] :color :blue}]
+                   :playing     []
                    :tanks       []}
         new-world (subscribe-tank old-world "Neo")
         new-tank  (first (new-world :tanks))]
     (is (= (count (:tanks  new-world)) 1))
-    (is (= (count (:av-ids new-world)) 3))
-    (is (= (count (:av-pos new-world)) 3))
-    (is (= (count (:av-cls new-world)) 3))
-    (is (= (conj (new-world :av-ids) (new-tank :id))       (old-world :av-ids)))
-    (is (= (conj (new-world :av-pos) (new-tank :position)) (old-world :av-pos)))
-    (is (= (conj (new-world :av-cls) (new-tank :color))    (old-world :av-cls)))
+    (is (= (count (:available new-world)) 3))
+    (is (= (cons (first (new-world :playing)) (new-world :available)) (old-world :available)))
+    (is (= (new-tank :id)       1))
+    (is (= (new-tank :position) [1 1]))
+    (is (= (new-tank :color)    :red))
     (is (> (new-world :last-update) (old-world :last-update)))))
 
 (deftest tank-subscription-locked-when-all-positions-are-taken
@@ -158,7 +159,9 @@
                :walls      []
                :trees      []
                :lasers     []
-               :explosions []}
+               :explosions []
+               :playing    [{:id 1 :position [1 1]} {:id 2 :position [2 2]}]
+               :available  [{:id 3 :position [3 3]} {:id 4 :position [4 4]}]}
         result (fire world 1)
         source (first (result :tanks))
         target (last  (result :tanks))]
@@ -169,7 +172,7 @@
     (is (= (target :energy) 9))
     (is (= (count (result :explosions)) 0))
     (is (= (count (result :lasers)) 1))
-    (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions}))))
+    (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions :playing :available}))))
 
 (deftest exploding-a-tank
   (let [world {:tanks      [{:id 1 :position [1 2] :orientation :east
@@ -180,7 +183,9 @@
                :walls      []
                :trees      []
                :lasers     []
-               :explosions []}
+               :explosions []
+               :playing    [{:id 1 :position [1 1]} {:id 2 :position [2 2]}]
+               :available  [{:id 3 :position [3 3]} {:id 4 :position [4 4]}]}
         result (fire world 1)
         source (first (result :tanks))]
     (is (> (source :last-shot)) ((first (world :tanks)) :last-shot))
@@ -191,7 +196,9 @@
     (is (= (count (result :tanks)) 1))
     (is (= (count (result :explosions)) 1))
     (is (= (count (result :lasers)) 1))
-    (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions}))))
+    (is (= (count (result :playing)) 1))
+    (is (= (count (result :available)) 3))
+    (is (= (into #{} (keys result)) #{:tanks :walls :trees :lasers :last-update :explosions :playing :available}))))
 
 (defn update-tanks [world tank]
   (let [tanks         (world :tanks)

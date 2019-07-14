@@ -39,6 +39,20 @@
     (when-not (every? #(< % 2) occurrences)
       "A tankid should not be duplicated on the board")))
 
+(defn- tankids-in [char-world]
+  (filter
+   #(or (= % \1)(= % \2)(= % \3) (= % \4))
+   (flatten char-world)))
+
+(defn- tankids-consecutive [char-world]
+  (let [sorted (sort (tankids-in char-world))]
+    (and (= (first sorted) \1)
+         (=  (Integer/parseInt (str (last sorted))) (count sorted)))))
+
+(defn- tankid-order [char-world]
+  (when-not (tankids-consecutive char-world)
+    "Tankid should start at 1 and ids should be consecutive."))
+
 (defn- valid-boundary [char-coll]
   (every? #(or (= \w %) (= \. %)) char-coll))
 
@@ -94,7 +108,8 @@
       "Tanks should be surrounded by walls so they cannot vanish into the void")))
 
 (def world-structure-rules
-  [empty-world rows-size cols-size cols-count known-chars tank-presence tank-duplication surrounded])
+  [empty-world rows-size cols-size cols-count known-chars
+   tank-presence tank-duplication tankid-order surrounded])
 
 (defn validate [world]
   (let [char-world        (ff/to-chars world)
@@ -123,7 +138,19 @@
         tree-positions-xy (mapv rc->xy tree-positions-rc)]
     (mapv #(hash-map :position % :energy 1 :uuid (java.util.UUID/randomUUID)) tree-positions-xy)))
 
+(defn get-tanks [board]
+  (let [char-board    (ff/to-chars board)
+        id-color      [[\1 :red] [\2 :green] [\3 :yellow] [\4 :blue]]
+        tanks         (mapv
+                       #(hash-map
+                         :id       (Integer/parseInt (str (first %)))
+                         :position (first (mapv rc->xy (collect-positions char-board  #{(first %)})))
+                         :color    (second %))
+                       id-color)]
+        (vec (remove (fn [{:keys [position]}] (nil? position)) tanks))))
+
 (comment
+
 
 (validate [["wwwwwwwwwwww"]
            ["w....1.....w"]
@@ -134,8 +161,8 @@
            ["w3.t....t..w"]
            ["w..t....t..w"]
            ["w...tttt...w"]
-           ["w..........w"]
            ["w.....2....w"]
+           ["w..........w"]
            ["wwwwwwwwwwww"]])
 
 (validate
@@ -145,9 +172,9 @@
    ["....w....w..........."]
    [".....w....w.........."]
    ["......w....w........."]
-   [".......w....w........"]
-   ["......w......w......."]
-   [".....w........w......"]
+   [".......wttttw........"]
+   ["......wttttttw......."]
+   [".....wttttttttw......"]
    ["....w....ww....w....."]
    ["...w....w..w....w...."]
    ["..w....w....w....wwww"]

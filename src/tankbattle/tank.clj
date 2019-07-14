@@ -38,22 +38,18 @@
 (defn subscribe-tank
   [world tank-name]
   ;; only subscribe when there is still room left for tanks
-  (if (< (count (world :tanks)) 4)
-    (let [available-ids       (world :av-ids)
-          id                  (first available-ids)
-          remaining-ids       (set (rest available-ids))
-          available-pos       (world :av-pos)
-          position            (first available-pos)
-          remaining-pos       (set (rest available-pos))
-          available-colors    (world :av-cls)
-          color               (first available-colors)
-          remaining-colors    (set (rest available-colors))
-          new-tank            (create-tank id position color tank-name)]
+  (if (> (count (world :available)) 0)
+    (let [available-options (world :available)
+          option            (first available-options)
+          remaining-options (vec (rest available-options))
+          id                (option :id)
+          position          (option :position)
+          color             (option :color)
+          new-tank          (create-tank id position color tank-name)]
       (-> world
           (assoc     :last-update (System/currentTimeMillis))
-          (assoc     :av-ids      remaining-ids)
-          (assoc     :av-pos      remaining-pos)
-          (assoc     :av-cls      remaining-colors)
+          (assoc     :available   remaining-options)
+          (update-in [:playing]   conj option)
           (update-in [:tanks]     conj new-tank)))
     world))
 
@@ -164,12 +160,23 @@
                                      (conj
                                       (world :explosions)
                                       (explosion hit-tank-pos now))
-                                     (world :explosions))]
+                                     (world :explosions))
+
+                ;; subscription administration
+                destroyed-tank     (first (filter (fn [{:keys [id]}] (= id hit-tankid)) (world :playing)))
+                updated-playing    (if destroyed?
+                                     (vec (remove (fn [{:keys [id]}] (= id hit-tankid)) (world :playing)))
+                                     (world :playing))
+                updated-available  (if destroyed?
+                                     (conj (world :available) destroyed-tank)
+                                     (world :available))]
 
             (-> world
                 (assoc :tanks       updated-tanks)
                 (assoc :explosions  updated-explosions)
                 (assoc :lasers      updated-lasers)
+                (assoc :available   updated-available)
+                (assoc :playing     updated-playing)
                 (assoc :last-update now)))
 
           (= object-to-hit :tree)
