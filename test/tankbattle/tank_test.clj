@@ -35,15 +35,16 @@
     (is (= (tank :color)    :green))))
 
 (deftest tank-subscription
-  (let [old-world {:last-update 123567890
-                   :available   [{:id 1 :position [1 1] :color :red}
-                                 {:id 2 :position [2 2] :color :green}
-                                 {:id 3 :position [3 3] :color :yellow}
-                                 {:id 4 :position [4 4] :color :blue}]
-                   :playing     []
-                   :tanks       []}
-        new-world (subscribe-tank old-world "Neo")
-        new-tank  (first (new-world :tanks))]
+  (let [old-world   {:last-update 123567890
+                     :available   [{:id 1 :position [1 1] :color :red}
+                                   {:id 2 :position [2 2] :color :green}
+                                   {:id 3 :position [3 3] :color :yellow}
+                                   {:id 4 :position [4 4] :color :blue}]
+                     :playing     []
+                     :tanks       []}
+        subscription (subscribe-tank old-world "Neo")
+        new-world    (first subscription)
+        new-tank     (last subscription)]
     (is (= (count (:tanks  new-world)) 1))
     (is (= (count (:available new-world)) 3))
     (is (= (cons (first (new-world :playing)) (new-world :available)) (old-world :available)))
@@ -53,7 +54,7 @@
     (is (> (new-world :last-update) (old-world :last-update)))))
 
 (deftest tank-subscription-locked-when-all-positions-are-taken
-  (let [old-world {:tanks [{:tank :dummy} {:tank :dummy} {:tank :dummy} {:tank :dummy}]}
+  (let [old-world {:available []}
         new-world (subscribe-tank old-world "Dr.Strange")]
     (is (= new-world old-world))))
 

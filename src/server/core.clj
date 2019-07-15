@@ -55,11 +55,15 @@
    {:methods {:post
               {:parameters {:body {:name s/Str}}
                :consumes   "application/json"
+               :produces   #{"application/edn" "application/json"}
                :response   (fn [ctx]
                              (if (free-spot? @world)
-                               (let [name         (get-in ctx [:parameters :body :name])
-                                     updated-world (tank/subscribe-tank @world name)]
-                                 (reset! world updated-world))
+                               (let [name          (get-in ctx [:parameters :body :name])
+                                     subscription  (tank/subscribe-tank @world name)
+                                     updated-world (first subscription)
+                                     new-tank      (second subscription)
+                                     just-do-it    (reset! world updated-world)]
+                                 {:subscribed new-tank})
                                (-> ctx :response (assoc :status 403))))}}}))
 
 ;; DEPRICATED

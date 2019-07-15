@@ -46,11 +46,11 @@
           position          (option :position)
           color             (option :color)
           new-tank          (create-tank id position color tank-name)]
-      (-> world
-          (assoc     :last-update (System/currentTimeMillis))
-          (assoc     :available   remaining-options)
-          (update-in [:playing]   conj option)
-          (update-in [:tanks]     conj new-tank)))
+      [(-> world
+            (assoc     :last-update (System/currentTimeMillis))
+            (assoc     :available   remaining-options)
+            (update-in [:playing]   conj option)
+            (update-in [:tanks]     conj new-tank)) new-tank])
     world))
 
 (defn move [world tankid direction]

@@ -30,6 +30,30 @@ The running environment minimally contains:
 - BATTLE!
 - Repeat
 
+</br>
+
+Since v0.1 you can also design your own tankbattle boards. The server receives
+the boards via the `/reset` endpoint. Some example boards can be found in the
+*CURL for testing* chapter in this README. A board is specified as a 2D array
+containing strings, where each character in a string represents a cell in the
+board grid.
+
+``` javascript
+{"board": [[".w."],["w1w"],[".w."]]}
+```
+
+... describes the simplest board. It has 1 tank in the middle of the board. The
+tank is surrounded by walls on the north, east, south and west. The corners of
+the board are empty spaces.
+
+A valid board adheres to several requirements, for instance: a tank must be
+surrounded by walls so the tank can never fall off the board, a board should
+have an equal amount of columns in each and every row, a board can only contain
+4 tanks with ids 1, 2, 3, and 4, etc. The API will give you feedback in the
+response when you provide an invalid board. If you're not a trial-and-error
+kinda person, I suggest you take a look at the [board.clj
+file](https://github.com/mmzsource/tankbattle/blob/master/src/tankbattle/board.clj).
+
 ## Development
 
 - Tested with leiningen 2.9.1 on Java 1.8.0_05. (known problems loading
@@ -75,8 +99,6 @@ curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/js
 # lambda world
 curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/json' -H 'Accept: application/json' -d '{"secret": "do not cheat!", "board": [["wwwwwww.............."],["w1.....w............."],["wwww....w............"],["....w....w..........."],[".....w....w.........."],["......w....w........."],[".......wttttw........"],["......wttttttw......."],[".....wttttttttw......"],["....w....ww....w....."],["...w....w..w....w...."],["..w....w....w....wwww"],[".w2...w......w.....3w"],["wwwwww........wwwwwww"]]}'
 
-curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": [["www"],["w1w"],["www"]]}'
-curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/json" -H "Accept: application/json" -d '{"world": [["wwwwwwwwwwww"], ["w....1.....w"], ["w..........w"], ["w...tttt...w"], ["w..t....t..w"], ["w3.t....t..w"], ["w..t....t.4w"], ["w..t....t..w"], ["w...tttt...w"], ["w..........w"], ["w.....2....w"], ["wwwwwwwwwwww"]]}'
 ```
 
 ## Credits
@@ -100,7 +122,7 @@ curl -i -X POST http://localhost:3000/validate -H "Content-Type: application/jso
 Design your own world:
 
 - [X] endpoint to validate board-design (and explain what's wrong with it)
-- [ ] convert board-design to a game-world via the reset endpoint. Fallback: default world
+- [X] convert board-design to a game-world via the reset endpoint. Fallback: default world
 
 Furthermore:
 
