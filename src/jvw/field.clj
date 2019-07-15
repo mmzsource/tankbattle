@@ -24,6 +24,21 @@
           (assoc-in field [:tank-positions id] location)
           field))))))
 
+(defn remove-entity [field location]
+  (let [entity-id (entity-id-at field location)]
+    (-> field
+      (update :entities dissoc entity-id)
+      (update :entity-positioning dissoc location)
+      ((fn [field]
+          (if (tnk/is? (entity-id->entity field entity-id))
+            (update field :tank-positions dissoc entity-id)
+            field))))))
+
+(defn clear-tank [field tank-id]
+  (-> field
+    (update :entity-positioning dissoc (tank-position field tank-id))
+    (update :tank-positions dissoc tank-id)))
+
 (defn introduce-laser [field laser]
   (update field :lasers conj laser))
 
