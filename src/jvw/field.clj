@@ -1,25 +1,53 @@
 (ns jvw.field
-  (:require [jvw.entity :as ent]))
+  (:require [jvw.entity :as ent]
+            [jvw.tank :as tnk]))
 
 (defn make [width height]
   {:dimensions {:width width :height height}
-              :entities   {}
-              :tank-positions {}})
+   :time 0
+   :entities   {}
+   :entity-positioning {}
+   :tank-positions {}
+   :lasers #{}
+   :explosions {}})
 
-(defn tank-by-id [tank-id]
-  )
+(defn entity-id->entity [field entity-id]
+  (get-in field [:entities entity-id]))
 
-(defn tank-position [field tank]
-  (get-in field [:tank-positions (ent/id tank)]))
+(defn introduce [field location entity]
+  (let [id (ent/id entity)]
+    (-> field
+      (assoc-in [:entities id] entity)
+      (assoc-in [:entity-positioning location] id)
+      ((fn [field]
+        (if (tnk/is? entity)
+          (assoc-in field [:tank-positions id] location)
+          field))))))
 
-(defn update-tank-position [field tank position]
+(defn introduce-laser [field laser]
+  (update field :lasers conj laser))
+
+(defn introduce-explosion [field location explosion]
+  (assoc-in field [:explosions location] explosion))
+
+(defn time [field] (field :time))
+
+(defn tank-position [field tank-id]
+  (get-in field [:tank-positions tank-id]))
+
+(defn update-entity [field entity-id & fs]
+  (reduce
+      (fn [field f]
+        (update-in field [:entities entity-id] f))
+      field fs))
+
+(defn update-position [field entity-id location]
   (-> field
-    (update :entities dissoc (tank-position field tank))
-    (assoc-in [:entities position] tank)
-    (assoc-in [:tank-positions (ent/id tank)] position)))
-
-(defn move-tank [field tank direction]
-  (update-tank-position field tank (adjacent (tank-position field tank) direction)))
+    (update :entity-positioning dissoc (tank-position field entity-id))
+    (assoc-in [:entity-positioning location] entity-id)
+    ((fn [field]
+      (if (tnk/is? (entity-id->entity field entity-id))
+        (assoc-in field [:tank-positions entity-id] location))))))
 
 (defn in? [field [c r]]
   (let [width  (get-in field [:dimensions :width])
@@ -33,15 +61,8 @@
     :south  [c        (inc r)]
     :west   [(dec c)  r]))
 
-(defn entity-at [field location]
-  (get-in field [:entities location]))
+(defn entity-id-at [field location]
+  (get-in field [:entity-positioning location]))
 
-(defn hitscan
-  "In %field, originating a ray from %location (including %location) in %direction, returns the first non-empty location the ray encounters."
-  [field location direction]
-  (if (in? field location)
-    (let [entity (get-in field [:entities location])]
-      (if entity
-        [location entity]
-        (recur field (adjacent location direction) direction)))
-    [nil nil]))
+(defn entity-at [field location]
+  (entity-id->entity field (entity-id-at field location)))
