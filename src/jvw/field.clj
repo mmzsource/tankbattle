@@ -14,6 +14,12 @@
 (defn entity-id->entity [field entity-id]
   (get-in field [:entities entity-id]))
 
+(defn entity-id-at [field location]
+  (get-in field [:entity-positioning location]))
+
+(defn entity-at [field location]
+  (entity-id->entity field (entity-id-at field location)))
+
 (defn introduce [field location entity]
   (let [id (ent/id entity)]
     (-> field
@@ -34,6 +40,9 @@
             (update field :tank-positions dissoc entity-id)
             field))))))
 
+(defn tank-position [field tank-id]
+  (get-in field [:tank-positions tank-id]))
+
 (defn clear-tank [field tank-id]
   (-> field
     (update :entity-positioning dissoc (tank-position field tank-id))
@@ -46,9 +55,6 @@
   (assoc-in field [:explosions location] explosion))
 
 (defn time [field] (field :time))
-
-(defn tank-position [field tank-id]
-  (get-in field [:tank-positions tank-id]))
 
 (defn update-entity [field entity-id & fs]
   (reduce
@@ -69,15 +75,10 @@
         height (get-in field [:dimensions :height])]
     (and (<= 0 c (dec width)) (<= 0 r (dec height)))))
 
-(defn adjacent [[c r] direction]
-  (case direction
+(defn adjacent [loc direction]
+  (let [_ (print "loc:" loc)
+        [c r] loc](case direction
     :north  [c        (dec r)]
     :east   [(inc c)  r]
     :south  [c        (inc r)]
-    :west   [(dec c)  r]))
-
-(defn entity-id-at [field location]
-  (get-in field [:entity-positioning location]))
-
-(defn entity-at [field location]
-  (entity-id->entity field (entity-id-at field location)))
+    :west   [(dec c)  r])))
