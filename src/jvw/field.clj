@@ -33,12 +33,12 @@
 (defn remove-entity [field location]
   (let [entity-id (entity-id-at field location)]
     (-> field
-      (update :entities dissoc entity-id)
-      (update :entity-positioning dissoc location)
       ((fn [field]
           (if (tnk/is? (entity-id->entity field entity-id))
             (update field :tank-positions dissoc entity-id)
-            field))))))
+            field)))
+      (update :entities dissoc entity-id)
+      (update :entity-positioning dissoc location))))
 
 (defn tank-position [field tank-id]
   (get-in field [:tank-positions tank-id]))
@@ -75,10 +75,9 @@
         height (get-in field [:dimensions :height])]
     (and (<= 0 c (dec width)) (<= 0 r (dec height)))))
 
-(defn adjacent [loc direction]
-  (let [_ (print "loc:" loc)
-        [c r] loc](case direction
+(defn adjacent [[c r] direction]
+  (case direction
     :north  [c        (dec r)]
     :east   [(inc c)  r]
     :south  [c        (inc r)]
-    :west   [(dec c)  r])))
+    :west   [(dec c)  r]))
