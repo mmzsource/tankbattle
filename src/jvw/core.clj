@@ -10,25 +10,10 @@
 
 (def tree (ent/make :tree 1))
 
-(defn explosion [time]
-  {:moment-created time :lifetime 3000})
-
-(def tank (tnk/make :west))
-(def tank2 (assoc (tnk/make :south) :energy 1))
-
-(def field1
-  (-> (fld/make 12 12)
-    (assoc :time 3000)
-    (fld/introduce [1 0] tank)
-    (fld/introduce [0 0] (ptl/make [2 2]))
-    (fld/introduce [2 2] (mne/make (ent/id tank)))))
-
-(def field2
-  (let [victim (assoc (tnk/make :east) :energy 1)]
-    (-> (fld/make 3 1)
-      (assoc :time 9000)
-      (fld/introduce [2 0] tank)
-      (fld/introduce [0 0] tree))))
+(def field-test
+  (-> (fld/make 5 5)
+    (fld/introduce [4 4] (wll/make))
+    (fld/introduce [2 2] tree)))
 
 (defn laser-segments_r [field location direction segments traversals]
   (if (fld/in? field location)
@@ -37,7 +22,7 @@
         segments
         (let [entity (fld/entity-at field location)]
           (if entity
-            (case (ent/type entity)
+            (case (:type entity)
               :mirror
                 (let [new-direction (mrr/reflection entity direction)
                       new-location (fld/adjacent location new-direction)
@@ -76,7 +61,7 @@
       (fld/update-entity attacker-id (tnk/add-hit victim-id))
       (fld/update-entity victim-id ent/reduce-energy)
       ((fn [field]
-          (if (<= (ent/energy (fld/entity-id->entity field victim-id)) 0)
+          (if (<= (:energy (fld/entity-id->entity field victim-id)) 0)
             (-> field
               (fld/update-entity victim-id (tnk/set-moment-killed time))
               (fld/clear-tank victim-id)
@@ -89,7 +74,7 @@
     (-> field
       (fld/update-entity tree-id ent/reduce-energy)
       ((fn [field]
-          (if (<= (ent/energy (fld/entity-id->entity field tree-id)) 0)
+          (if (<= (:energy (fld/entity-id->entity field tree-id)) 0)
             (-> field
               (fld/remove-entity location)
               (fld/introduce-explosion location (explosion (fld/time field))))
@@ -99,7 +84,7 @@
   (if (= segment-type :hit)
     (let [time (fld/time field)
           victim (fld/entity-at field location)]
-      (case (ent/type victim)
+      (case (:type victim)
         :tank
           (hit-tank field tank-id location)
         :tree
@@ -116,17 +101,17 @@
             orientation (tnk/orientation tank-original)
             shot-start-location (fld/adjacent position orientation)
             laser-segments (laser-segments field shot-start-location orientation)]
-        (-> field
+        [(-> field
           (fld/update-entity tank-id
             (tnk/set-moment-last-shot time))
           (fld/introduce-laser (lsr/make time laser-segments))
-          (check-hit tank-id (peek laser-segments))))
-      field)))
+          (check-hit tank-id (peek laser-segments))) true])
+      [field false])))
 
 (defn movement-destination [field location direction]
   (let [adj (fld/adjacent location direction)
         entity (fld/entity-at field adj)]
-    (if (ptl/is? entity) (ptl/target entity) adj)))
+    (if (and entity (ptl/is? entity)) (ptl/target entity) adj)))
 
 (defn no-entity-at-location? [field location]
   (not (fld/entity-at field location)))
@@ -137,7 +122,8 @@
       (let [entity (fld/entity-at field destination)]
         (or (not entity) (mne/is? entity)))
       (has-been? time (tank :moment-last-shot) 2000)
-      (has-been? time (tank :moment-last-move) 2000))))
+      (has-been? time (tank :moment-last-move) 2000)
+      (fld/in? field destination))))
 
 (defn check-mine [field field-old tank-id]
   (let [position (fld/tank-position field tank-id)
@@ -161,13 +147,13 @@
         entity (fld/entity-at field destination)]
     (if (can-move? field (fld/entity-id->entity field tank-id) destination)
       (if (and entity (mne/is? entity))
-        (-> field
+        [(-> field
           (fld/remove-entity destination)
           (tank-moved tank-id destination direction)
           (fld/introduce-explosion destination (explosion time))
-          (hit-tank (mne/tank-id entity) destination))
-        (tank-moved field tank-id destination direction))
-      field)))
+          (hit-tank (mne/tank-id entity) destination)) true]
+        [(tank-moved field tank-id destination direction) true])
+      [field false])))
 
 (defn has-spare-mine? [field tank-id]
   (->> (field :entities)
@@ -177,15 +163,11 @@
     (count)
     (> 2)))
 
-(defn moved? [field-old field-new tank-id]
-  (not (= (fld/tank-position field-old tank-id)
-          (fld/tank-position field-new tank-id))))
-
 (defn drop-mine [field tank-id direction]
   (if (has-spare-mine? field tank-id)
     (let [position-old (fld/tank-position field tank-id)
-          field-new (move field tank-id direction)]
-      (if (moved? field field-new tank-id)
-        (fld/introduce field-new position-old (mne/make tank-id))
-        field))
-    field))
+          [field-new moved?] (move field tank-id direction)]
+      (if moved?
+        [(fld/introduce field-new position-old (mne/make tank-id)) true]
+        [field false]))
+    [field false]))

@@ -1,30 +1,78 @@
-(ns server.game)
+(ns server.game
+  (:require [jvw.core :as core]
+            [jvw.field :as fld]
+            [jvw.entity :as ent]
+            [jvw.tank :as tnk]))
 
 (def nato [:alpha :bravo :charlie :delta :echo :foxtrot :golf :hotel :india :juliet :kilo :lima :mike :november :oscar :papa :quebec :romeo :sierra :tango :uniform :victor :whiskey :x-ray :yankee :zulu])
 
 (defn random-from [arr]
   (arr (rand-int (count arr))))
 
-(defn player-id []
-  (clojure.string/join "_" (map name (repeatedly 3 #(random-from nato)))))
+(defn secret []
+  (->> #(random-from nato) (repeatedly 4) (map name) (clojure.string/join "_")))
 
-(player-id)
+(defn novel-secret [secrets]
+  (let [secret (secret)] (if (contains? secrets secret) (recur secrets) secret)))
 
-(defn make []
-  {:players {}})
+(defn make [field]
+  {:field field
+   :secret->tank-id {}})
 
 (defn joinable? [game]
-  (-> game (:identities) (keys) (count) (> 4)))
+  (fld/has-starting-placement? (game :field)))
 
-(defn novel-player-id [ids]
-  (let [id (player-id)]
-    (if (contains? ids id)
-      (recur ids)
-      id)))
+(defn join [game name]
+  (let [field (game :field)]
+    (if (fld/has-starting-placement? field)
+      (let [secrets (set (keys (game :secret->tank-id)))
+            secret (novel-secret secrets)
+            [field-placement-taken [position orientation]] (fld/take-starting-placement field)
+            tank (assoc (tnk/make orientation) :name name)
+            tank-id (ent/id tank)
+            field-tank-introduced (fld/introduce field-placement-taken position tank)
+            game-new (-> game
+                      (assoc :field field-tank-introduced)
+                      (assoc-in [:secret->tank-id secret] tank-id))]
+        [game-new secret]))))
 
-(defn join [game]
-  (let [ids (set (keys (game :players)))
-        id (novel-player-id ids)]
-    (assoc-in game [:players id] 1)))
+(defn move-command [game tank-id direction]
+  (let [field (game :field)
+        [field-new worked?] (core/move field tank-id direction)]
+    (if (worked? field field-new tank-id)
+      (assoc game :field field-new))))
 
-(-> (make) (join) (join))
+(defn fire-command [game tank-id]
+  (let [field (game :field)
+        [field-new worked?] (core/shoot field tank-id)]
+    (if (worked? field field-new tank-id)
+      (assoc game :field field-new))))
+
+(defn mine-command [game tank-id direction]
+  (let [field (game :field)\
+        [field-new worked?] (core/drop-mine field tank-id direction)]
+    (if (worked? field field-new tank-id)
+      (assoc game :field field-new))))
+
+(defn is-registered? [game secret]
+  (contains? (game :secret->tank-id) secret))
+
+(defn tank-id [game secret]
+  (get-in game [:secret->tank-id secret]))
+
+(defn command [game secret type & args]
+  (let [tank-id (get-in game [:secret->tank-id secret])]
+    (if tank-id
+      (case type
+        :move (let [[direction] args] (move-command game tank-id direction))
+        :fire (fire-command game tank-id)
+        :mine (let [[direction] args] (mine-command game tank-id direction))))))
+
+(def game (make (fld/make 4 2)))
+(def joined (join game "tenkske"))
+(def game-joined (let [[g _] joined] g))
+(def scrt (let [[_ s] joined] s))
+(def tnk-id (tank-id game-joined scrt))
+
+(let [[game-new scrt] (join game "kei koele tenk")]
+  (tank-id game-new scrt))

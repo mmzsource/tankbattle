@@ -9,7 +9,20 @@
    :entity-positioning {}
    :tank-positions {}
    :lasers #{}
-   :explosions {}})
+   :explosions {}
+   :starting-placements [[[0 0] :south]
+                         [[1 0] :south]
+                         [[2 0] :south]
+                         [[3 0] :south]]})
+
+(defn has-starting-placement? [field]
+  (->> (field :starting-placements) (count) (< 0)))
+
+(defn take-starting-placement [field]
+  (let [starting-placement (first (field :starting-placements))
+        new-starting-placements (rest (field :starting-placements))
+        new-field (assoc field :starting-placements new-starting-placements)]
+    [new-field starting-placement]))
 
 (defn entity-id->entity [field entity-id]
   (get-in field [:entities entity-id]))
