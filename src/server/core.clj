@@ -11,14 +11,14 @@
 
 (defn new-game [field] (g/make field))
 
-(def game (atom (new-game (core/field-test))))
+(def game (atom (new-game core/field-test)))
 
 (defn world-resource []
   (yada/resource
    {:methods {:get
               {:produces       #{"application/json" "application/edn"}
                :response       (fn [_]
-                                 game)}}
+                                 @game)}}
     :access-control {:allow-origin "*"
                      :allow-credentials false
                      :expose-headers #{"X-Custom"}

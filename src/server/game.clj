@@ -39,20 +39,17 @@
 (defn move-command [game tank-id direction]
   (let [field (game :field)
         [field-new worked?] (core/move field tank-id direction)]
-    (if (worked? field field-new tank-id)
-      (assoc game :field field-new))))
+    (if worked? (assoc game :field field-new))))
 
 (defn fire-command [game tank-id]
   (let [field (game :field)
         [field-new worked?] (core/shoot field tank-id)]
-    (if (worked? field field-new tank-id)
-      (assoc game :field field-new))))
+    (if worked? (assoc game :field field-new))))
 
 (defn mine-command [game tank-id direction]
-  (let [field (game :field)\
+  (let [field (game :field)
         [field-new worked?] (core/drop-mine field tank-id direction)]
-    (if (worked? field field-new tank-id)
-      (assoc game :field field-new))))
+    (if worked? (assoc game :field field-new))))
 
 (defn is-registered? [game secret]
   (contains? (game :secret->tank-id) secret))

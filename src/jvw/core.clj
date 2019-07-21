@@ -10,6 +10,9 @@
 
 (def tree (ent/make :tree 1))
 
+(defn explosion [moment-created]
+  {:moment-created moment-created :lifetime 4000})
+
 (def field-test
   (-> (fld/make 5 5)
     (fld/introduce [4 4] (wll/make))
