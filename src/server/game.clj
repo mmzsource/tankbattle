@@ -24,11 +24,11 @@
 
 (defn join [game name]
   (let [field (game :field)]
-    (if (fld/has-starting-placement? field)
+    (if (joinable? game)
       (let [secrets (set (keys (game :secret->tank-id)))
             secret (novel-secret secrets)
             [field-placement-taken [position orientation]] (fld/take-starting-placement field)
-            tank (assoc (tnk/make orientation) :name name)
+            tank (tnk/make orientation name)
             tank-id (ent/id tank)
             field-tank-introduced (fld/introduce field-placement-taken position tank)
             game-new (-> game
@@ -36,20 +36,21 @@
                       (assoc-in [:secret->tank-id secret] tank-id))]
         [game-new secret]))))
 
+;TODO refactor x-command functions to a single function... how to deal with optional parameters?
 (defn move-command [game tank-id direction]
   (let [field (game :field)
         [field-new worked?] (core/move field tank-id direction)]
-    (if worked? (assoc game :field field-new))))
+    (if worked? [(assoc game :field field-new) true] [game false])))
 
 (defn fire-command [game tank-id]
   (let [field (game :field)
         [field-new worked?] (core/shoot field tank-id)]
-    (if worked? (assoc game :field field-new))))
+    (if worked? [(assoc game :field field-new) true] [game false])))
 
 (defn mine-command [game tank-id direction]
   (let [field (game :field)
         [field-new worked?] (core/drop-mine field tank-id direction)]
-    (if worked? (assoc game :field field-new))))
+    (if worked? [(assoc game :field field-new) true] [game false])))
 
 (defn is-registered? [game secret]
   (contains? (game :secret->tank-id) secret))

@@ -18,17 +18,51 @@
    {:methods {:get
               {:produces       #{"application/json" "application/edn"}
                :response       (fn [_]
-                                 @game)}}
+                                 (@game :field))}}
     :access-control {:allow-origin "*"
                      :allow-credentials false
                      :expose-headers #{"X-Custom"}
                      :allow-methods #{:get}
                      :allow-headers ["Api-Key"]}}))
 
+(defn subscribe-tank-resource []
+  (yada/resource
+   {:methods {:post
+              {:parameters {:body {:name s/Str}}
+               :consumes   "application/json"
+               :produces   #{"application/edn" "application/json"}
+               :response   (fn [ctx]
+                             (if (g/joinable? @game)
+                               (let [name          (get-in ctx [:parameters :body :name])
+                                     [game-new secret]  (g/join @game name)
+                                     just-do-it    (reset! game game-new)]
+                                 {:secret secret})
+                               (-> ctx :response (assoc :status 403))))}}}))
+
+(defn command-resource []
+  (yada/resource
+   {:methods {:post
+              {:parameters {:body {:secret  s/Str
+                                   :command s/Str
+                                   :direction  s/Str}}
+               :consumes   "application/json"
+               :produces #{"application/json" "application/edn"}
+               :response   (fn [ctx]
+                             (let [secret        (get-in ctx [:parameters :body :secret])
+                                   command       (get-in ctx [:parameters :body :command])
+                                   direction       (get-in ctx [:parameters :body :direction])
+                                   [game-new had-effect?] (g/command @game secret :move :east)
+                                   just-do-it! (reset! game game-new)]
+                               {:secret secret
+                                 :command (keyword command)
+                                 :direction (keyword direction)}))}}}))
+
 (defn routes []
   ["/"
    {
-    "world"     (world-resource)}])
+    "world"     (world-resource)
+    "subscribe" (subscribe-tank-resource)
+    "tank" (command-resource)}])
 
 (defn run []
   (let [listener (yada/listener (routes) {:port 3000})

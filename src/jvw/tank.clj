@@ -1,9 +1,10 @@
 (ns jvw.tank
   (:require [jvw.entity :as ent]))
 
-(defn make [orientation]
+(defn make [orientation name]
   (-> (ent/make :tank 3)
     (merge {:orientation orientation
+            :name name
             :moment-last-shot -999999
             :moment-last-move -999999
             :hits []
