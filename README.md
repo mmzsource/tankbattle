@@ -119,11 +119,6 @@ curl -i -X POST http://localhost:3000/reset     -H 'Content-Type: application/js
 
 ### Features
 
-Design your own world:
-
-- [X] endpoint to validate board-design (and explain what's wrong with it)
-- [X] convert board-design to a game-world via the reset endpoint. Fallback: default world
-
 Furthermore:
 
 - [ ] Laser mirrors -> smallest possible change (?): simply have one more target
