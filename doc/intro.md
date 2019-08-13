@@ -28,8 +28,7 @@ the battlefield, but the tank engines are known to drop dead directly after the
 move and restarting the engine costs 2 seconds. All movement commands given
 within this 2 seconds time-frame are simply neglected.
 
-To fire the canon, you simply send the command `"fire"`. Due to safety reasons a
-tank can only `"fire"` after it hasn't moved for 2 seconds. The reloading mechanism
+To fire the canon, you simply send the command `"fire"`. The reloading mechanism
 is terribly slow and you can only fire 5 seconds after your last shot. All fire
 commands given within this 5 seconds time-frame are completely neglected.
 

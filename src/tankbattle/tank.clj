@@ -100,10 +100,9 @@
         tank        (find-tank world tankid)
         tank-pos    (tank :position)
         orientation (tank :orientation)
-        reloaded    (< (tank :reloaded) now)
-        safe        (< (+ (tank :last-move) 2000) now)]
+        reloaded    (< (tank :reloaded) now)]
 
-    (if (and reloaded safe)
+    (if reloaded
       (let [nrst-tree (pos/nearest-pos-given-orient tank-pos (set (keys trees-map)) orientation)
             nrst-tank (pos/nearest-pos-given-orient tank-pos (set (keys tanks-map)) orientation)
             nrst-wall (pos/nearest-pos-given-orient tank-pos (set (keys walls-map)) orientation)
@@ -141,9 +140,7 @@
                                      (assoc :hits      src-tank-hits)
                                      (assoc :kills     src-tank-kills)
                                      (assoc :last-shot now)
-                                     (assoc :reloaded  (+ now 5000))
-                                     (assoc :last-move now)
-                                     (assoc :restarted (+ now 2000)))
+                                     (assoc :reloaded  (+ now 5000)))
 
                 ;; tank-map administration
                 updated-tank-map (if destroyed?
@@ -191,9 +188,7 @@
                 ;; tank administration
                 updated-tank (-> tank
                                  (assoc :last-shot now)
-                                 (assoc :reloaded  (+ now 5000))
-                                 (assoc :last-move now)
-                                 (assoc :restarted (+ now 2000)))
+                                 (assoc :reloaded  (+ now 5000)))
 
                 ;; tank-map administration
                 updated-tank-map (assoc tanks-map tank-pos [updated-tank])
@@ -223,9 +218,7 @@
           ;; handle-wall-hit
           (let [updated-tank     (-> tank
                                      (assoc :last-shot now)
-                                     (assoc :reloaded  (+ now 5000))
-                                     (assoc :last-move now)
-                                     (assoc :restarted (+ now 2000)))
+                                     (assoc :reloaded  (+ now 5000)))
                 updated-tank-map (assoc tanks-map tank-pos [updated-tank])
                 updated-tanks    (pos/unmap-positions updated-tank-map)]
 
