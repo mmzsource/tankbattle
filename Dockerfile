@@ -9,7 +9,7 @@ FROM openjdk:8-jre-slim
 
 WORKDIR /app
 
-COPY --from=build /build/target/uberjar/tankbattle-0.1.0-SNAPSHOT-standalone.jar /app/tankbattle.jar
+COPY --from=build /build/target/uberjar/tankbattle-0.2.0-SNAPSHOT-standalone.jar /app/tankbattle.jar
 
 EXPOSE 3000
 

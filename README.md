@@ -69,9 +69,9 @@ file](https://github.com/mmzsource/tankbattle/blob/master/src/tankbattle/board.c
 
 ## Docker
 
-- Build a docker image with `docker build -t tankbattle:v01 .`
+- Build a docker image with `docker build -t tankbattle:v02 .`
 - Image should be available in `docker images` list
-- Run with `docker run -d -p 3000:3000 --name tankbattle tankbattle:v01`
+- Run with `docker run -d -p 3000:3000 --name tankbattle-v02 tankbattle:v02`
 
 ## CURL for testing
 
